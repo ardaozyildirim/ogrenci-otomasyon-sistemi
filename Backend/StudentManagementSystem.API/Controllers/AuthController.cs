@@ -1,12 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StudentManagementSystem.Application.Commands.Auth;
 using StudentManagementSystem.Application.DTOs;
-using StudentManagementSystem.Infrastructure.Services;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace StudentManagementSystem.API.Controllers;
 
@@ -15,91 +11,91 @@ namespace StudentManagementSystem.API.Controllers;
 [AllowAnonymous]
 public class AuthController : ControllerBase
 {
-    private readonly IConfiguration _configuration;
-    private readonly IPasswordHashService _passwordHashService;
+    private readonly IMediator _mediator;
 
-    public AuthController(IConfiguration configuration, IPasswordHashService passwordHashService)
+    public AuthController(IMediator mediator)
     {
-        _configuration = configuration;
-        _passwordHashService = passwordHashService;
+        _mediator = mediator;
     }
 
     [HttpPost("login")]
-    public Task<ActionResult<AuthResponse>> Login(LoginRequest request)
+    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
-        // Mock authentication - in real app, validate against database
-        if (request.Email == "admin@example.com" && request.Password == "admin123")
+        try
         {
-            var token = GenerateJwtToken("admin@example.com", "Admin");
-            return Task.FromResult<ActionResult<AuthResponse>>(Ok(new AuthResponse
+            // Mock authentication for testing - in real app, validate against database
+            if (request.Email == "admin@example.com" && request.Password == "admin123")
             {
-                Token = token,
-                User = new UserDto
+                var command = new LoginCommand
                 {
-                    Id = 1,
-                    FirstName = "Admin",
-                    LastName = "User",
-                    Email = "admin@example.com",
-                    Role = Domain.Enums.UserRole.Admin
-                }
-            }));
-        }
+                    Email = request.Email,
+                    Password = request.Password
+                };
 
-        if (request.Email == "teacher@example.com" && request.Password == "teacher123")
+                var result = await _mediator.Send(command);
+                return Ok(result);
+            }
+
+            if (request.Email == "teacher@example.com" && request.Password == "teacher123")
+            {
+                var command = new LoginCommand
+                {
+                    Email = request.Email,
+                    Password = request.Password
+                };
+
+                var result = await _mediator.Send(command);
+                return Ok(result);
+            }
+
+            if (request.Email == "student@example.com" && request.Password == "student123")
+            {
+                var command = new LoginCommand
+                {
+                    Email = request.Email,
+                    Password = request.Password
+                };
+
+                var result = await _mediator.Send(command);
+                return Ok(result);
+            }
+
+            return Unauthorized("Invalid email or password");
+        }
+        catch (Exception ex)
         {
-            var token = GenerateJwtToken("teacher@example.com", "Teacher");
-            return Task.FromResult<ActionResult<AuthResponse>>(Ok(new AuthResponse
-            {
-                Token = token,
-                User = new UserDto
-                {
-                    Id = 2,
-                    FirstName = "Teacher",
-                    LastName = "User",
-                    Email = "teacher@example.com",
-                    Role = Domain.Enums.UserRole.Teacher
-                }
-            }));
+            return BadRequest(ex.Message);
         }
-
-        if (request.Email == "student@example.com" && request.Password == "student123")
-        {
-            var token = GenerateJwtToken("student@example.com", "Student");
-            return Task.FromResult<ActionResult<AuthResponse>>(Ok(new AuthResponse
-            {
-                Token = token,
-                User = new UserDto
-                {
-                    Id = 3,
-                    FirstName = "Student",
-                    LastName = "User",
-                    Email = "student@example.com",
-                    Role = Domain.Enums.UserRole.Student
-                }
-            }));
-        }
-
-        return Task.FromResult<ActionResult<AuthResponse>>(Unauthorized("Invalid credentials"));
     }
 
-    private string GenerateJwtToken(string email, string role)
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "");
-        var tokenDescriptor = new SecurityTokenDescriptor
+        try
         {
-            Subject = new ClaimsIdentity(new[]
+            var command = new RegisterCommand
             {
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, role)
-            }),
-            Expires = DateTime.UtcNow.AddHours(24),
-            Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                Password = request.Password,
+                Role = request.Role,
+                PhoneNumber = request.PhoneNumber,
+                DateOfBirth = request.DateOfBirth,
+                Address = request.Address
+            };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
+
 }

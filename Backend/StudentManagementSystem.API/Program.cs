@@ -5,8 +5,10 @@ using StudentManagementSystem.Infrastructure.Data;
 using StudentManagementSystem.Infrastructure;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StudentManagementSystem.API.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,24 +47,45 @@ builder.Services.AddSwaggerGen(c =>
 // Add Infrastructure Layer
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Override DbContext with In-Memory for testing
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("TestDb"));
+
 builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? ""))
-        };
-    });
+       builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+           .AddJwtBearer(options =>
+           {
+               options.TokenValidationParameters = new TokenValidationParameters
+               {
+                   ValidateIssuer = true,
+                   ValidateAudience = true,
+                   ValidateLifetime = true,
+                   ValidateIssuerSigningKey = true,
+                   ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                   ValidAudience = builder.Configuration["Jwt:Audience"],
+                   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? ""))
+               };
+           });
+
+       // Authorization Policies
+       builder.Services.AddAuthorization(options =>
+       {
+           options.AddPolicy(Policies.AdminOnly, policy =>
+               policy.Requirements.Add(new AdminOnlyRequirement()));
+           
+           options.AddPolicy(Policies.TeacherOrAdmin, policy =>
+               policy.Requirements.Add(new TeacherOrAdminRequirement()));
+           
+           options.AddPolicy(Policies.StudentOrAdmin, policy =>
+               policy.Requirements.Add(new StudentOrAdminRequirement()));
+       });
+
+       builder.Services.AddScoped<IAuthorizationHandler, AdminOnlyHandler>();
+       builder.Services.AddScoped<IAuthorizationHandler, TeacherOrAdminHandler>();
+       builder.Services.AddScoped<IAuthorizationHandler, StudentOrAdminHandler>();
 
 builder.Services.AddCors(options =>
 {

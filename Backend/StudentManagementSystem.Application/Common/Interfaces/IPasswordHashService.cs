@@ -1,4 +1,4 @@
-namespace StudentManagementSystem.Infrastructure.Services;
+namespace StudentManagementSystem.Application.Common.Interfaces;
 
 public interface IPasswordHashService
 {

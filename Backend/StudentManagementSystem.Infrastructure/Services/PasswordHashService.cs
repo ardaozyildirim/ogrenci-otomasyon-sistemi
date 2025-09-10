@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 
+using StudentManagementSystem.Application.Common.Interfaces;
+
 namespace StudentManagementSystem.Infrastructure.Services;
 
 public class PasswordHashService : IPasswordHashService

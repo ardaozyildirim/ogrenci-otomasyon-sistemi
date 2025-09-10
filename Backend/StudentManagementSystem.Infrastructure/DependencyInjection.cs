@@ -7,6 +7,10 @@ using StudentManagementSystem.Infrastructure.Data;
 using StudentManagementSystem.Infrastructure.Repositories;
 using StudentManagementSystem.Infrastructure.Services;
 using StudentManagementSystem.Infrastructure.UnitOfWork;
+using MediatR;
+using StudentManagementSystem.Application.Mappings;
+using FluentValidation;
+using System.Reflection;
 
 namespace StudentManagementSystem.Infrastructure;
 
@@ -30,10 +34,20 @@ public static class DependencyInjection
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
 
-        // Services
-        services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<IPasswordHashService, PasswordHashService>();
+               // Services
+               services.AddScoped<IEmailService, EmailService>();
+               services.AddScoped<IPasswordHashService, PasswordHashService>();
+               services.AddScoped<IJwtTokenService, JwtTokenService>();
 
-        return services;
+               // MediatR
+               services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));
+
+               // AutoMapper
+               services.AddAutoMapper(cfg => cfg.AddMaps(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));
+
+               // FluentValidation
+               services.AddValidatorsFromAssembly(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly);
+
+               return services;
     }
 }
