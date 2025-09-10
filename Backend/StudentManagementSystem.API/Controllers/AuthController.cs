@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using StudentManagementSystem.Application.Commands.Auth;
 using StudentManagementSystem.Application.DTOs;
+using StudentManagementSystem.API.Attributes;
 
 namespace StudentManagementSystem.API.Controllers;
 
@@ -19,6 +21,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
         try
@@ -69,6 +72,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
         try

@@ -1,16 +1,19 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using StudentManagementSystem.Application.Commands.Students;
 using StudentManagementSystem.Application.Queries.Students;
 using StudentManagementSystem.Application.DTOs;
 using AutoMapper;
+using StudentManagementSystem.API.Attributes;
 
 namespace StudentManagementSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("ApiPolicy")]
 public class StudentsController : ControllerBase
 {
     private readonly IMediator _mediator;

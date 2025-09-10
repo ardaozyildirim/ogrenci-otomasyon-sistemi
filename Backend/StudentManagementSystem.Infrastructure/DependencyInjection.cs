@@ -38,6 +38,7 @@ public static class DependencyInjection
                services.AddScoped<IEmailService, EmailService>();
                services.AddScoped<IPasswordHashService, PasswordHashService>();
                services.AddScoped<IJwtTokenService, JwtTokenService>();
+               services.AddScoped<ISecurityService, SecurityService>();
 
                // MediatR
                services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));

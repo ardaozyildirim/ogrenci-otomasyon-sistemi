@@ -9,11 +9,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StudentManagementSystem.API.Authorization;
+using StudentManagementSystem.API.Middleware;
+using StudentManagementSystem.API.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Add Security Services
+builder.Services.AddScoped<StudentManagementSystem.Infrastructure.Services.ISecurityService, StudentManagementSystem.Infrastructure.Services.SecurityService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -87,17 +92,16 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Stude
        builder.Services.AddScoped<IAuthorizationHandler, TeacherOrAdminHandler>();
        builder.Services.AddScoped<IAuthorizationHandler, StudentOrAdminHandler>();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
+// Add CORS Configuration
+builder.Services.AddCorsConfiguration(builder.Configuration);
+
+// Add Rate Limiting
+builder.Services.AddRateLimitingConfiguration();
 
 var app = builder.Build();
+
+// Add Global Exception Middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -106,7 +110,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
+// Use CORS Configuration
+app.UseCorsConfiguration(app.Environment);
+
+// Use Rate Limiting
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
