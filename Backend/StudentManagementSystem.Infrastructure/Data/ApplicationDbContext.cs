@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StudentManagementSystem.Application.Interfaces;
 using StudentManagementSystem.Domain.Entities;
+using StudentManagementSystem.Domain.Events;
 
 namespace StudentManagementSystem.Infrastructure.Data;
 
@@ -109,6 +110,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        DispatchDomainEventsAsync();
+        
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
             switch (entry.State)
@@ -123,5 +126,27 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         }
 
         return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    private Task DispatchDomainEventsAsync()
+    {
+        var entitiesWithEvents = ChangeTracker.Entries<BaseEntity>()
+            .Where(e => e.Entity.DomainEvents.Any())
+            .Select(e => e.Entity)
+            .ToList();
+
+        foreach (var entity in entitiesWithEvents)
+        {
+            var events = entity.DomainEvents.ToList();
+            entity.ClearDomainEvents();
+            
+            foreach (var domainEvent in events)
+            {
+                // Domain events will be handled by MediatR in the Application layer
+                // For now, we just clear them to avoid infinite loops
+            }
+        }
+
+        return Task.CompletedTask;
     }
 }

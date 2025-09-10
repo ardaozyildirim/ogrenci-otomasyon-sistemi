@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using StudentManagementSystem.Application.Interfaces;
 using StudentManagementSystem.Application.Mappings;
 using StudentManagementSystem.Infrastructure.Data;
+using StudentManagementSystem.Infrastructure;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -41,10 +42,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+// Add Infrastructure Layer
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));
 
