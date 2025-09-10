@@ -4,12 +4,12 @@ namespace StudentManagementSystem.Domain.Events.Grade;
 
 public class GradeAssignedEvent : BaseDomainEvent
 {
-    public Grade Grade { get; }
+    public Entities.Grade Grade { get; }
     public string StudentName { get; }
     public string CourseName { get; }
     public decimal Score { get; }
 
-    public GradeAssignedEvent(Grade grade, string studentName, string courseName)
+    public GradeAssignedEvent(Entities.Grade grade, string studentName, string courseName)
     {
         Grade = grade;
         StudentName = studentName;

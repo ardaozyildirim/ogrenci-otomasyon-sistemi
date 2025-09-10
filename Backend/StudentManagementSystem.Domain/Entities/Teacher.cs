@@ -18,7 +18,7 @@ public class Teacher : BaseEntity
         return new Teacher
         {
             UserId = userId,
-            EmployeeNumber = EmployeeNumber.Create(employeeNumber).Value,
+            EmployeeNumber = employeeNumber,
             Department = department,
             Specialization = specialization,
             HireDate = hireDate ?? DateTime.UtcNow

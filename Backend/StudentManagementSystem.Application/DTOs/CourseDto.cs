@@ -15,5 +15,6 @@ public class CourseDto
     public DateTime? EndDate { get; set; }
     public string? Schedule { get; set; }
     public string? Location { get; set; }
+    public string TeacherName { get; set; } = string.Empty;
     public TeacherDto Teacher { get; set; } = null!;
 }

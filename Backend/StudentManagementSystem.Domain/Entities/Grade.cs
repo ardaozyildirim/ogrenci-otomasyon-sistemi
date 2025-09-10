@@ -29,7 +29,7 @@ public class Grade : BaseEntity
             GradeDate = DateTime.UtcNow
         };
 
-        grade.AddDomainEvent(new GradeAssignedEvent(grade, grade.Student.User.FullName, grade.Course.Name));
+        grade.AddDomainEvent(new GradeAssignedEvent(grade, "", ""));
         
         return grade;
     }

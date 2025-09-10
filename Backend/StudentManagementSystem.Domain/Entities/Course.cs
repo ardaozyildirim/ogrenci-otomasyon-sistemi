@@ -30,7 +30,7 @@ public class Course : BaseEntity
         return new Course
         {
             Name = name,
-            Code = CourseCode.Create(code).Value,
+            Code = code,
             Credits = credits,
             TeacherId = teacherId,
             Description = description,

@@ -31,7 +31,7 @@ public class User : BaseEntity
         {
             FirstName = firstName,
             LastName = lastName,
-            Email = Email.Create(email).Value,
+            Email = email,
             PasswordHash = passwordHash,
             Role = role,
             PhoneNumber = phoneNumber,

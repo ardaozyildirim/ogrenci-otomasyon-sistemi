@@ -21,13 +21,13 @@ public class Student : BaseEntity
         var student = new Student
         {
             UserId = userId,
-            StudentNumber = StudentNumber.Create(studentNumber).Value,
+            StudentNumber = studentNumber,
             Department = department,
             Grade = grade,
             ClassName = className
         };
 
-        student.AddDomainEvent(new StudentCreatedEvent(student, studentNumber, student.User.Email));
+        student.AddDomainEvent(new StudentCreatedEvent(student, studentNumber, ""));
         
         return student;
     }
