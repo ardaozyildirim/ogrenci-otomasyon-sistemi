@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const [userRole, setUserRole] = useState('Student');
+  const [userRole] = useState('Student');
   const [stats, setStats] = useState({
     students: 0,
     teachers: 0,
