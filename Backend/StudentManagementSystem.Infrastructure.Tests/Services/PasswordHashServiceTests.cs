@@ -71,22 +71,46 @@ public class PasswordHashServiceTests
 
     [Theory]
     [InlineData("")]
-    [InlineData(null)]
     public void HashPassword_InvalidPassword_ShouldThrowArgumentException(string invalidPassword)
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _passwordHashService.HashPassword(invalidPassword));
     }
 
+    [Fact]
+    public void HashPassword_NullPassword_ShouldThrowArgumentException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _passwordHashService.HashPassword(null!));
+    }
+
     [Theory]
     [InlineData("", "validhash")]
-    [InlineData(null, "validhash")]
     [InlineData("validpassword", "")]
-    [InlineData("validpassword", null)]
     public void VerifyPassword_InvalidInput_ShouldReturnFalse(string password, string hashedPassword)
     {
         // Act
         var isValid = _passwordHashService.VerifyPassword(password, hashedPassword);
+
+        // Assert
+        Assert.False(isValid);
+    }
+
+    [Fact]
+    public void VerifyPassword_NullPassword_ShouldReturnFalse()
+    {
+        // Act
+        var isValid = _passwordHashService.VerifyPassword(null!, "validhash");
+
+        // Assert
+        Assert.False(isValid);
+    }
+
+    [Fact]
+    public void VerifyPassword_NullHashedPassword_ShouldReturnFalse()
+    {
+        // Act
+        var isValid = _passwordHashService.VerifyPassword("validpassword", null!);
 
         // Assert
         Assert.False(isValid);

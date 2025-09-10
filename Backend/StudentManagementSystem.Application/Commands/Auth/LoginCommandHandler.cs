@@ -37,6 +37,10 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
         return new AuthResponse
         {
             Token = token,
+            UserId = user.Id,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            ExpiresAt = DateTime.UtcNow.AddHours(24),
             User = new UserDto
             {
                 Id = user.Id,

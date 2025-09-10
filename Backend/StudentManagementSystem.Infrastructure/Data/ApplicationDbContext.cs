@@ -110,7 +110,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        DispatchDomainEventsAsync();
+        await DispatchDomainEventsAsync();
         
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
