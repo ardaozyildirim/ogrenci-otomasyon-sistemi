@@ -1,0 +1,142 @@
+@page "/register"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthService AuthService
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Register - Student Management System</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-16">
+    <MudPaper Class="pa-8">
+        <MudText Typo="Typo.h4" Class="mb-4" Align="Align.Center">Register</MudText>
+        
+        <MudForm @ref="form" @bind-IsValid="@isFormValid" @bind-Errors="@errors">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="registerRequest.FirstName"
+                                  Label="First Name"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  RequiredError="First name is required"
+                                  Class="mb-4" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="registerRequest.LastName"
+                                  Label="Last Name"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  RequiredError="Last name is required"
+                                  Class="mb-4" />
+                </MudItem>
+            </MudGrid>
+            
+            <MudTextField @bind-Value="registerRequest.Email"
+                          Label="Email"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          RequiredError="Email is required"
+                          InputType="InputType.Email"
+                          Class="mb-4" />
+            
+            <MudTextField @bind-Value="registerRequest.Password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Required="true"
+                          RequiredError="Password is required"
+                          Class="mb-4" />
+            
+            <MudSelect @bind-Value="registerRequest.Role"
+                       Label="Role"
+                       Variant="Variant.Outlined"
+                       Required="true"
+                       RequiredError="Role is required"
+                       Class="mb-4">
+                <MudSelectItem Value="@("Student")">Student</MudSelectItem>
+                <MudSelectItem Value="@("Teacher")">Teacher</MudSelectItem>
+                <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+            </MudSelect>
+            
+            <MudTextField @bind-Value="registerRequest.PhoneNumber"
+                          Label="Phone Number"
+                          Variant="Variant.Outlined"
+                          Class="mb-4" />
+            
+            <MudDatePicker @bind-Date="registerRequest.DateOfBirth"
+                           Label="Date of Birth"
+                           Variant="Variant.Outlined"
+                           Class="mb-4" />
+            
+            <MudTextField @bind-Value="registerRequest.Address"
+                          Label="Address"
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          Class="mb-4" />
+            
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Class="mt-4"
+                       OnClick="HandleRegister"
+                       Disabled="!isFormValid || isLoading">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Registering...</MudText>
+                }
+                else
+                {
+                    <MudText>Register</MudText>
+                }
+            </MudButton>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Already have an account? 
+                <MudLink Href="/login" Color="Color.Primary">Login here</MudLink>
+            </MudText>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm form = new();
+    private bool isFormValid;
+    private string[] errors = { };
+    private bool isLoading = false;
+    
+    private RegisterRequest registerRequest = new();
+
+    private async Task HandleRegister()
+    {
+        if (!isFormValid) return;
+        
+        isLoading = true;
+        
+        try
+        {
+            var result = await AuthService.RegisterAsync(registerRequest);
+            
+            if (result != null)
+            {
+                await AuthStateProvider.MarkUserAsAuthenticatedAsync(result.Token, result.Role, result.User);
+                Snackbar.Add($"Welcome, {result.User.FirstName}! Registration successful.", Severity.Success);
+                NavigationManager.NavigateTo("/dashboard", true);
+            }
+            else
+            {
+                Snackbar.Add("Registration failed. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Registration failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

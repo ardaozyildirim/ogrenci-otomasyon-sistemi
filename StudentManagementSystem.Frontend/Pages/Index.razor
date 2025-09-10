@@ -1,0 +1,11 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+
+<PageTitle>Student Management System</PageTitle>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/dashboard", true);
+    }
+}
