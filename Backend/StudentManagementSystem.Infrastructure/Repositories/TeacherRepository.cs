@@ -37,4 +37,22 @@ public class TeacherRepository : BaseRepository<Teacher>, ITeacherRepository
     {
         return await _dbSet.AnyAsync(t => t.EmployeeNumber == employeeNumber && !t.IsDeleted, cancellationToken);
     }
+
+    public async Task<IEnumerable<Teacher>> GetAllAsync(int? pageNumber = null, int? pageSize = null, string? department = null, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet
+            .Include(t => t.User)
+            .Where(t => !t.IsDeleted);
+
+        if (!string.IsNullOrEmpty(department))
+            query = query.Where(t => t.Department == department);
+
+        if (pageNumber.HasValue && pageSize.HasValue)
+        {
+            var skip = (pageNumber.Value - 1) * pageSize.Value;
+            query = query.Skip(skip).Take(pageSize.Value);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
 }

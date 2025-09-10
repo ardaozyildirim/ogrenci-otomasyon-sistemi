@@ -6,12 +6,13 @@ using StudentManagementSystem.Application.Commands.Students;
 using StudentManagementSystem.Application.Queries.Students;
 using StudentManagementSystem.Application.DTOs;
 using AutoMapper;
-using StudentManagementSystem.API.Attributes;
+using StudentManagementSystem.API.Models;
 
 namespace StudentManagementSystem.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 [Authorize]
 [EnableRateLimiting("ApiPolicy")]
 public class StudentsController : ControllerBase
@@ -23,6 +24,38 @@ public class StudentsController : ControllerBase
     {
         _mediator = mediator;
         _mapper = mapper;
+    }
+
+    /// <summary>
+    /// Gets all students with optional pagination and filtering
+    /// </summary>
+    /// <param name="pageNumber">Page number for pagination</param>
+    /// <param name="pageSize">Number of items per page</param>
+    /// <param name="department">Filter by department</param>
+    /// <param name="grade">Filter by grade</param>
+    /// <returns>List of students</returns>
+    [HttpGet]
+    [Authorize(Roles = "Admin,Teacher")]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<StudentDto>>), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 401)]
+    [ProducesResponseType(typeof(ErrorResponse), 403)]
+    public async Task<ActionResult<ApiResponse<IEnumerable<StudentDto>>>> GetAllStudents(
+        [FromQuery] int? pageNumber = null,
+        [FromQuery] int? pageSize = null,
+        [FromQuery] string? department = null,
+        [FromQuery] int? grade = null)
+    {
+        var query = new GetAllStudentsQuery
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Department = department,
+            Grade = grade
+        };
+
+        var students = await _mediator.Send(query);
+        var studentDtos = _mapper.Map<IEnumerable<StudentDto>>(students);
+        return Ok(ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(studentDtos, "Students retrieved successfully"));
     }
 
     [HttpGet("{id}")]
@@ -77,5 +110,14 @@ public class StudentsController : ControllerBase
 
         await _mediator.Send(command);
         return Ok();
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteStudent(int id)
+    {
+        var command = new DeleteStudentCommand { Id = id };
+        await _mediator.Send(command);
+        return NoContent();
     }
 }

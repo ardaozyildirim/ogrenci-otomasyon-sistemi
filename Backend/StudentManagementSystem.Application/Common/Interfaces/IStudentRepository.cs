@@ -9,4 +9,5 @@ public interface IStudentRepository : IRepository<Student>
     Task<IEnumerable<Student>> GetByCourseIdAsync(int courseId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Student>> GetByDepartmentAsync(string department, CancellationToken cancellationToken = default);
     Task<bool> StudentNumberExistsAsync(string studentNumber, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Student>> GetAllAsync(int? pageNumber = null, int? pageSize = null, string? department = null, int? grade = null, CancellationToken cancellationToken = default);
 }

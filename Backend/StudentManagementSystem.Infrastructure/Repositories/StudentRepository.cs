@@ -46,4 +46,25 @@ public class StudentRepository : BaseRepository<Student>, IStudentRepository
     {
         return await _dbSet.AnyAsync(s => s.StudentNumber == studentNumber && !s.IsDeleted, cancellationToken);
     }
+
+    public async Task<IEnumerable<Student>> GetAllAsync(int? pageNumber = null, int? pageSize = null, string? department = null, int? grade = null, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet
+            .Include(s => s.User)
+            .Where(s => !s.IsDeleted);
+
+        if (!string.IsNullOrEmpty(department))
+            query = query.Where(s => s.Department == department);
+
+        if (grade.HasValue)
+            query = query.Where(s => s.Grade == grade);
+
+        if (pageNumber.HasValue && pageSize.HasValue)
+        {
+            var skip = (pageNumber.Value - 1) * pageSize.Value;
+            query = query.Skip(skip).Take(pageSize.Value);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
 }

@@ -52,4 +52,26 @@ public class CourseRepository : BaseRepository<Course>, ICourseRepository
     {
         return await _dbSet.AnyAsync(c => c.Code == code && !c.IsDeleted, cancellationToken);
     }
+
+    public async Task<IEnumerable<Course>> GetAllAsync(int? pageNumber = null, int? pageSize = null, int? teacherId = null, string? department = null, CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet
+            .Include(c => c.Teacher)
+            .ThenInclude(t => t.User)
+            .Where(c => !c.IsDeleted);
+
+        if (teacherId.HasValue)
+            query = query.Where(c => c.TeacherId == teacherId);
+
+        if (!string.IsNullOrEmpty(department))
+            query = query.Where(c => c.Teacher.Department == department);
+
+        if (pageNumber.HasValue && pageSize.HasValue)
+        {
+            var skip = (pageNumber.Value - 1) * pageSize.Value;
+            query = query.Skip(skip).Take(pageSize.Value);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
 }

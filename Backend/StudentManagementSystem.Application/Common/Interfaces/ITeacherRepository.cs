@@ -8,4 +8,5 @@ public interface ITeacherRepository : IRepository<Teacher>
     Task<Teacher?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Teacher>> GetByDepartmentAsync(string department, CancellationToken cancellationToken = default);
     Task<bool> EmployeeNumberExistsAsync(string employeeNumber, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Teacher>> GetAllAsync(int? pageNumber = null, int? pageSize = null, string? department = null, CancellationToken cancellationToken = default);
 }
