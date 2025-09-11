@@ -47,6 +47,22 @@ services:
       - student_management_network
     restart: unless-stopped
 
+  # Student Management Frontend
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: student_management_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://api:8080/api
+    depends_on:
+      - api
+    networks:
+      - student_management_network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
