@@ -148,4 +148,68 @@ public class AttendanceRepository : Repository<Attendance>, IAttendanceRepositor
         return await _context.Attendances
             .AnyAsync(a => a.StudentId == studentId && a.CourseId == courseId && a.AttendanceDate.Date == date.Date);
     }
+
+    // Soft delete specific methods
+    public async Task<Attendance?> GetByIdIncludingDeletedAsync(int id)
+    {
+        return await _context.Attendances
+            .IgnoreQueryFilters()
+            .Include(a => a.Student)
+            .Include(a => a.Course)
+                .ThenInclude(c => c.Teacher)
+            .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task<IEnumerable<Attendance>> GetAllIncludingDeletedAsync()
+    {
+        return await _context.Attendances
+            .IgnoreQueryFilters()
+            .Include(a => a.Student)
+            .Include(a => a.Course)
+                .ThenInclude(c => c.Teacher)
+            .OrderByDescending(a => a.AttendanceDate)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Attendance>> GetDeletedAsync()
+    {
+        return await _context.Attendances
+            .IgnoreQueryFilters()
+            .Include(a => a.Student)
+            .Include(a => a.Course)
+                .ThenInclude(c => c.Teacher)
+            .Where(a => a.IsDeleted)
+            .OrderByDescending(a => a.DeletedAt)
+            .ToListAsync();
+    }
+
+    public async Task RestoreAsync(int id)
+    {
+        var attendance = await _context.Attendances
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.Id == id && a.IsDeleted);
+        
+        if (attendance != null)
+        {
+            attendance.IsDeleted = false;
+            attendance.DeletedAt = null;
+            attendance.DeletedBy = null;
+            attendance.UpdatedAt = DateTime.UtcNow;
+            
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task HardDeleteAsync(int id)
+    {
+        var attendance = await _context.Attendances
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.Id == id);
+        
+        if (attendance != null)
+        {
+            _context.Attendances.Remove(attendance);
+            await _context.SaveChangesAsync();
+        }
+    }
 }

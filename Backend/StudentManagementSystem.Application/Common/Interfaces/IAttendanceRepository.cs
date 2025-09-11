@@ -17,4 +17,11 @@ public interface IAttendanceRepository
     Task<bool> ExistsAsync(int id);
     Task<bool> StudentExistsInCourseAsync(int studentId, int courseId);
     Task<bool> AttendanceExistsForDateAsync(int studentId, int courseId, DateTime date);
+
+    // Soft delete specific methods
+    Task<Attendance?> GetByIdIncludingDeletedAsync(int id);
+    Task<IEnumerable<Attendance>> GetAllIncludingDeletedAsync();
+    Task<IEnumerable<Attendance>> GetDeletedAsync();
+    Task RestoreAsync(int id);
+    Task HardDeleteAsync(int id);
 }

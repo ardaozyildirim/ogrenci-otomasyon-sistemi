@@ -104,4 +104,68 @@ public class GradeRepository : Repository<Grade>, IGradeRepository
         return await _context.StudentCourses
             .AnyAsync(sc => sc.StudentId == studentId && sc.CourseId == courseId && sc.IsActive);
     }
+
+    // Soft delete specific methods
+    public async Task<Grade?> GetByIdIncludingDeletedAsync(int id)
+    {
+        return await _context.Grades
+            .IgnoreQueryFilters()
+            .Include(g => g.Student)
+            .Include(g => g.Course)
+                .ThenInclude(c => c.Teacher)
+            .FirstOrDefaultAsync(g => g.Id == id);
+    }
+
+    public async Task<IEnumerable<Grade>> GetAllIncludingDeletedAsync()
+    {
+        return await _context.Grades
+            .IgnoreQueryFilters()
+            .Include(g => g.Student)
+            .Include(g => g.Course)
+                .ThenInclude(c => c.Teacher)
+            .OrderByDescending(g => g.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Grade>> GetDeletedAsync()
+    {
+        return await _context.Grades
+            .IgnoreQueryFilters()
+            .Include(g => g.Student)
+            .Include(g => g.Course)
+                .ThenInclude(c => c.Teacher)
+            .Where(g => g.IsDeleted)
+            .OrderByDescending(g => g.DeletedAt)
+            .ToListAsync();
+    }
+
+    public async Task RestoreAsync(int id)
+    {
+        var grade = await _context.Grades
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(g => g.Id == id && g.IsDeleted);
+        
+        if (grade != null)
+        {
+            grade.IsDeleted = false;
+            grade.DeletedAt = null;
+            grade.DeletedBy = null;
+            grade.UpdatedAt = DateTime.UtcNow;
+            
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task HardDeleteAsync(int id)
+    {
+        var grade = await _context.Grades
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(g => g.Id == id);
+        
+        if (grade != null)
+        {
+            _context.Grades.Remove(grade);
+            await _context.SaveChangesAsync();
+        }
+    }
 }

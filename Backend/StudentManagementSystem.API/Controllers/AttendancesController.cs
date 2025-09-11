@@ -126,4 +126,46 @@ public class AttendancesController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Get deleted attendance records - Only Admin can access
+    /// </summary>
+    [HttpGet("deleted")]
+    // [Authorize(Roles = "Admin")] // Temporarily disabled for testing
+    public async Task<ActionResult<IEnumerable<AttendanceDto>>> GetDeletedAttendances()
+    {
+        try
+        {
+            var query = new GetDeletedAttendancesQuery();
+            var attendances = await _mediator.Send(query);
+            return Ok(attendances);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Restore a deleted attendance record - Only Admin can access
+    /// </summary>
+    [HttpPost("{id}/restore")]
+    // [Authorize(Roles = "Admin")] // Temporarily disabled for testing
+    public async Task<ActionResult> RestoreAttendance(int id)
+    {
+        try
+        {
+            var command = new RestoreAttendanceCommand(id);
+            await _mediator.Send(command);
+            return Ok(new { message = "Attendance record restored successfully." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

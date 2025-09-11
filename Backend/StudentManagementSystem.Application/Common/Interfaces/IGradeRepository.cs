@@ -14,4 +14,11 @@ public interface IGradeRepository
     Task DeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
     Task<bool> StudentExistsInCourseAsync(int studentId, int courseId);
+
+    // Soft delete specific methods
+    Task<Grade?> GetByIdIncludingDeletedAsync(int id);
+    Task<IEnumerable<Grade>> GetAllIncludingDeletedAsync();
+    Task<IEnumerable<Grade>> GetDeletedAsync();
+    Task RestoreAsync(int id);
+    Task HardDeleteAsync(int id);
 }

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StudentManagementSystem.Domain.Entities;
+using StudentManagementSystem.Domain.Common;
+using System.Linq.Expressions;
 
 namespace StudentManagementSystem.Infrastructure.Data;
 
@@ -157,7 +159,44 @@ public class ApplicationDbContext : DbContext
                 modelBuilder.Entity(entityType.ClrType)
                     .Property("UpdatedBy")
                     .HasMaxLength(50);
+
+                modelBuilder.Entity(entityType.ClrType)
+                    .Property("DeletedBy")
+                    .HasMaxLength(50);
+
+                // Add global query filter for soft delete
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var property = Expression.Property(parameter, "IsDeleted");
+                var filter = Expression.Lambda(Expression.Equal(property, Expression.Constant(false)), parameter);
+                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
             }
+        }
+    }
+
+    public override int SaveChanges()
+    {
+        HandleSoftDelete();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        HandleSoftDelete();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void HandleSoftDelete()
+    {
+        var deletedEntities = ChangeTracker.Entries<BaseEntity>()
+            .Where(e => e.State == EntityState.Deleted)
+            .ToList();
+
+        foreach (var entity in deletedEntities)
+        {
+            entity.State = EntityState.Modified;
+            entity.Entity.IsDeleted = true;
+            entity.Entity.DeletedAt = DateTime.UtcNow;
+            // TODO: Set DeletedBy based on current user context
         }
     }
 }
