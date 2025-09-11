@@ -49,7 +49,7 @@ public class Course : BaseEntity
         StartDate = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
 
-        AddDomainEvent(new CourseStartedEvent(this, TeacherId, Teacher.User.FullName));
+        AddDomainEvent(new CourseStartedEvent(this, TeacherId, Teacher?.User?.FullName ?? "Unknown Teacher"));
     }
 
     public void CompleteCourse()

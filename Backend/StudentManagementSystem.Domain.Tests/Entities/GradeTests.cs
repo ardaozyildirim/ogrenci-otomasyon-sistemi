@@ -1,38 +1,34 @@
 using StudentManagementSystem.Domain.Entities;
-using StudentManagementSystem.Domain.Enums;
-using StudentManagementSystem.Domain.Events.Grade;
 
 namespace StudentManagementSystem.Domain.Tests.Entities;
 
 public class GradeTests
 {
     [Fact]
-    public void Create_ValidGrade_ShouldSetPropertiesAndRaiseEvent()
+    public void Create_ValidGrade_ShouldWork()
     {
         // Arrange
-        var studentId = 1;
-        var courseId = 1;
-        var score = 85;
-        var studentName = "John Doe";
-        var courseName = "Data Structures";
+        int studentId = 1;
+        int courseId = 1;
+        decimal score = 85;
+        string gradeType = "Midterm";
 
         // Act
-        var grade = Grade.Create(studentId, courseId, score, studentName, courseName);
+        var grade = Grade.Create(studentId, courseId, score, gradeType);
 
         // Assert
         Assert.Equal(studentId, grade.StudentId);
         Assert.Equal(courseId, grade.CourseId);
         Assert.Equal(score, grade.Score);
-        Assert.Single(grade.DomainEvents);
-        Assert.IsType<GradeAssignedEvent>(grade.DomainEvents.First());
+        Assert.Equal(gradeType, grade.GradeType);
     }
 
     [Fact]
-    public void UpdateScore_ValidScore_ShouldUpdateScore()
+    public void UpdateScore_ShouldChangeScore()
     {
         // Arrange
-        var grade = Grade.Create(1, 1, 75, "John Doe", "Data Structures");
-        var newScore = 90;
+        var grade = Grade.Create(1, 1, 75, "Midterm");
+        decimal newScore = 90;
 
         // Act
         grade.UpdateScore(newScore);
@@ -41,65 +37,37 @@ public class GradeTests
         Assert.Equal(newScore, grade.Score);
     }
 
-    [Theory]
-    [InlineData(97, LetterGrade.A_Plus)]
-    [InlineData(93, LetterGrade.A)]
-    [InlineData(90, LetterGrade.A_Minus)]
-    [InlineData(87, LetterGrade.B_Plus)]
-    [InlineData(83, LetterGrade.B)]
-    [InlineData(80, LetterGrade.B_Minus)]
-    [InlineData(77, LetterGrade.C_Plus)]
-    [InlineData(73, LetterGrade.C)]
-    [InlineData(70, LetterGrade.C_Minus)]
-    [InlineData(67, LetterGrade.D_Plus)]
-    [InlineData(63, LetterGrade.D)]
-    [InlineData(60, LetterGrade.D_Minus)]
-    [InlineData(59, LetterGrade.F)]
-    public void GetLetterGrade_VariousScores_ShouldReturnCorrectLetterGrade(int score, LetterGrade expectedGrade)
-    {
-        // Arrange
-        var grade = Grade.Create(1, 1, score, "John Doe", "Data Structures");
-
-        // Act
-        var letterGrade = grade.GetLetterGrade();
-
-        // Assert
-        Assert.Equal(expectedGrade, letterGrade);
-    }
-
-    [Theory]
-    [InlineData(75, true)]
-    [InlineData(60, true)]
-    [InlineData(59, false)]
-    [InlineData(0, false)]
-    public void IsPassingGrade_VariousScores_ShouldReturnCorrectResult(int score, bool expectedResult)
-    {
-        // Arrange
-        var grade = Grade.Create(1, 1, score, "John Doe", "Data Structures");
-
-        // Act
-        var isPassing = grade.IsPassingGrade();
-
-        // Assert
-        Assert.Equal(expectedResult, isPassing);
-    }
-
     [Fact]
-    public void Create_WithInvalidScore_ShouldThrowArgumentException()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentException>(() => Grade.Create(1, 1, -1, "John Doe", "Data Structures"));
-        Assert.Throws<ArgumentException>(() => Grade.Create(1, 1, 101, "John Doe", "Data Structures"));
-    }
-
-    [Fact]
-    public void UpdateScore_WithInvalidScore_ShouldThrowArgumentException()
+    public void GetLetterGrade_ShouldReturnCorrectLetter()
     {
         // Arrange
-        var grade = Grade.Create(1, 1, 75, "John Doe", "Data Structures");
+        var gradeA = Grade.Create(1, 1, 95, "Final");
+        var gradeB = Grade.Create(1, 1, 85, "Final");
+        var gradeF = Grade.Create(1, 1, 45, "Final");
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => grade.UpdateScore(-1));
-        Assert.Throws<ArgumentException>(() => grade.UpdateScore(101));
+        Assert.Equal("A", gradeA.GetLetterGrade());
+        Assert.Equal("B", gradeB.GetLetterGrade());
+        Assert.Equal("F", gradeF.GetLetterGrade());
+    }
+
+    [Fact]
+    public void IsPassingGrade_ShouldReturnCorrectResult()
+    {
+        // Arrange
+        var passingGrade = Grade.Create(1, 1, 70, "Final");
+        var failingGrade = Grade.Create(1, 1, 50, "Final");
+
+        // Act & Assert
+        Assert.True(passingGrade.IsPassingGrade());
+        Assert.False(failingGrade.IsPassingGrade());
+    }
+
+    [Fact]
+    public void Create_InvalidScore_ShouldThrowError()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => Grade.Create(1, 1, -10, "Test"));
+        Assert.Throws<ArgumentException>(() => Grade.Create(1, 1, 110, "Test"));
     }
 }

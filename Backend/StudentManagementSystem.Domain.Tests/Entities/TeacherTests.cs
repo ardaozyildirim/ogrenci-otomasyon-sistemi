@@ -6,14 +6,14 @@ namespace StudentManagementSystem.Domain.Tests.Entities;
 public class TeacherTests
 {
     [Fact]
-    public void Create_ValidTeacher_ShouldSetProperties()
+    public void Create_ValidTeacher_ShouldWork()
     {
         // Arrange
-        var userId = 1;
-        var employeeNumber = "EMP001";
-        var department = "Computer Science";
-        var specialization = "Software Engineering";
-        var hireDate = DateTime.Now;
+        int userId = 1;
+        string employeeNumber = "EMP0001";
+        string department = "Computer Science";
+        string specialization = "Software Engineering";
+        DateTime hireDate = DateTime.Now;
 
         // Act
         var teacher = Teacher.Create(userId, employeeNumber, department, specialization, hireDate);
@@ -27,18 +27,11 @@ public class TeacherTests
     }
 
     [Fact]
-    public void AddCourse_ValidCourse_ShouldAddToCourses()
+    public void AddCourse_ShouldAddCourseToTeacher()
     {
         // Arrange
-        var teacher = Teacher.Create(1, "EMP001", "Computer Science", "Software Engineering", DateTime.Now);
-        var course = new Course
-        {
-            Id = 1,
-            Name = "Data Structures",
-            Code = "CS101",
-            Credits = 3,
-            TeacherId = teacher.Id
-        };
+        var teacher = Teacher.Create(1, "EMP0001", "Computer Science", "Software Engineering", DateTime.Now);
+        var course = Course.Create("Math 101", "MATH101", 3, teacher.Id);
 
         // Act
         teacher.AddCourse(course);
@@ -49,51 +42,32 @@ public class TeacherTests
     }
 
     [Fact]
-    public void RemoveCourse_ExistingCourse_ShouldRemoveFromCourses()
+    public void RemoveCourse_ShouldRemoveCourseFromTeacher()
     {
         // Arrange
-        var teacher = Teacher.Create(1, "EMP001", "Computer Science", "Software Engineering", DateTime.Now);
-        var course = new Course
-        {
-            Id = 1,
-            Name = "Data Structures",
-            Code = "CS101",
-            Credits = 3,
-            TeacherId = teacher.Id
-        };
+        var teacher = Teacher.Create(1, "EMP0001", "Computer Science", "Software Engineering", DateTime.Now);
+        var course = Course.Create("Math 101", "MATH101", 3, teacher.Id);
         teacher.AddCourse(course);
 
         // Act
-        teacher.RemoveCourse(course);
+        teacher.RemoveCourse(course.Id);
 
         // Assert
         Assert.Empty(teacher.Courses);
     }
 
     [Fact]
-    public void GetActiveCourses_WithActiveCourses_ShouldReturnActiveCourses()
+    public void GetActiveCourses_ShouldReturnOnlyActiveCourses()
     {
         // Arrange
-        var teacher = Teacher.Create(1, "EMP001", "Computer Science", "Software Engineering", DateTime.Now);
-        var activeCourse = new Course
-        {
-            Id = 1,
-            Name = "Data Structures",
-            Code = "CS101",
-            Credits = 3,
-            TeacherId = teacher.Id,
-            Status = CourseStatus.Active
-        };
-        var completedCourse = new Course
-        {
-            Id = 2,
-            Name = "Algorithms",
-            Code = "CS102",
-            Credits = 3,
-            TeacherId = teacher.Id,
-            Status = CourseStatus.Completed
-        };
-
+        var teacher = Teacher.Create(1, "EMP0001", "Computer Science", "Software Engineering", DateTime.Now);
+        var activeCourse = Course.Create("Math 101", "MATH101", 3, teacher.Id);
+        var completedCourse = Course.Create("Physics 101", "PHYS101", 3, teacher.Id);
+        
+        activeCourse.StartCourse();
+        completedCourse.StartCourse();
+        completedCourse.CompleteCourse();
+        
         teacher.AddCourse(activeCourse);
         teacher.AddCourse(completedCourse);
 
@@ -106,29 +80,17 @@ public class TeacherTests
     }
 
     [Fact]
-    public void GetCompletedCourses_WithCompletedCourses_ShouldReturnCompletedCourses()
+    public void GetCompletedCourses_ShouldReturnOnlyCompletedCourses()
     {
         // Arrange
-        var teacher = Teacher.Create(1, "EMP001", "Computer Science", "Software Engineering", DateTime.Now);
-        var activeCourse = new Course
-        {
-            Id = 1,
-            Name = "Data Structures",
-            Code = "CS101",
-            Credits = 3,
-            TeacherId = teacher.Id,
-            Status = CourseStatus.Active
-        };
-        var completedCourse = new Course
-        {
-            Id = 2,
-            Name = "Algorithms",
-            Code = "CS102",
-            Credits = 3,
-            TeacherId = teacher.Id,
-            Status = CourseStatus.Completed
-        };
-
+        var teacher = Teacher.Create(1, "EMP0001", "Computer Science", "Software Engineering", DateTime.Now);
+        var activeCourse = Course.Create("Math 101", "MATH101", 3, teacher.Id);
+        var completedCourse = Course.Create("Physics 101", "PHYS101", 3, teacher.Id);
+        
+        activeCourse.StartCourse();
+        completedCourse.StartCourse();
+        completedCourse.CompleteCourse();
+        
         teacher.AddCourse(activeCourse);
         teacher.AddCourse(completedCourse);
 

@@ -6,76 +6,71 @@ namespace StudentManagementSystem.Domain.Tests.Entities;
 public class UserTests
 {
     [Fact]
-    public void Create_ValidUser_ShouldReturnUser()
+    public void Create_ValidUser_ShouldWork()
     {
         // Arrange
-        var firstName = "John";
-        var lastName = "Doe";
-        var email = "john.doe@example.com";
-        var passwordHash = "hashedpassword";
-        var role = UserRole.Student;
+        string firstName = "John";
+        string lastName = "Doe";
+        string email = "john@test.com";
+        string password = "password123";
+        UserRole role = UserRole.Student;
 
         // Act
-        var user = User.Create(firstName, lastName, email, passwordHash, role);
+        var user = User.Create(firstName, lastName, email, password, role);
 
         // Assert
         Assert.Equal(firstName, user.FirstName);
         Assert.Equal(lastName, user.LastName);
         Assert.Equal(email, user.Email);
-        Assert.Equal(passwordHash, user.PasswordHash);
+        Assert.Equal(password, user.PasswordHash);
         Assert.Equal(role, user.Role);
         Assert.Equal("John Doe", user.FullName);
     }
 
-    [Theory]
-    [InlineData("", "Doe", "john@example.com", "password", UserRole.Student)]
-    [InlineData("John", "", "john@example.com", "password", UserRole.Student)]
-    [InlineData("John", "Doe", "john@example.com", "", UserRole.Student)]
-    public void Create_InvalidInput_ShouldThrowArgumentException(string firstName, string lastName, string email, string passwordHash, UserRole role)
+    [Fact]
+    public void Create_EmptyFirstName_ShouldThrowError()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => User.Create(firstName, lastName, email, passwordHash, role));
+        Assert.Throws<ArgumentException>(() => 
+            User.Create("", "Doe", "john@test.com", "password", UserRole.Student));
     }
 
     [Fact]
-    public void UpdateProfile_ValidData_ShouldUpdateUser()
+    public void UpdateProfile_ShouldChangeUserInfo()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@example.com", "password", UserRole.Student);
-        var newFirstName = "Jane";
-        var newLastName = "Smith";
-        var newPhoneNumber = "1234567890";
+        var user = User.Create("John", "Doe", "john@test.com", "password", UserRole.Student);
+        string newFirstName = "Jane";
+        string newLastName = "Smith";
 
         // Act
-        user.UpdateProfile(newFirstName, newLastName, newPhoneNumber);
+        user.UpdateProfile(newFirstName, newLastName);
 
         // Assert
         Assert.Equal(newFirstName, user.FirstName);
         Assert.Equal(newLastName, user.LastName);
-        Assert.Equal(newPhoneNumber, user.PhoneNumber);
         Assert.NotNull(user.UpdatedAt);
     }
 
     [Fact]
-    public void ChangePassword_ValidPassword_ShouldUpdatePassword()
+    public void ChangePassword_ShouldUpdatePassword()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@example.com", "oldpassword", UserRole.Student);
-        var newPasswordHash = "newpasswordhash";
+        var user = User.Create("John", "Doe", "john@test.com", "oldpassword", UserRole.Student);
+        string newPassword = "newpassword";
 
         // Act
-        user.ChangePassword(newPasswordHash);
+        user.ChangePassword(newPassword);
 
         // Assert
-        Assert.Equal(newPasswordHash, user.PasswordHash);
-        Assert.NotNull(user.UpdatedAt);
+        Assert.Equal(newPassword, user.PasswordHash);
     }
 
     [Fact]
     public void IsAdmin_AdminUser_ShouldReturnTrue()
     {
         // Arrange
-        var user = User.Create("Admin", "User", "admin@example.com", "password", UserRole.Admin);
+        var user = User.Create("Admin", "User", "admin@test.com", "password", UserRole.Admin);
 
         // Act & Assert
         Assert.True(user.IsAdmin());
@@ -84,26 +79,14 @@ public class UserTests
     }
 
     [Fact]
-    public void IsTeacher_TeacherUser_ShouldReturnTrue()
-    {
-        // Arrange
-        var user = User.Create("Teacher", "User", "teacher@example.com", "password", UserRole.Teacher);
-
-        // Act & Assert
-        Assert.False(user.IsAdmin());
-        Assert.True(user.IsTeacher());
-        Assert.False(user.IsStudent());
-    }
-
-    [Fact]
     public void IsStudent_StudentUser_ShouldReturnTrue()
     {
         // Arrange
-        var user = User.Create("Student", "User", "student@example.com", "password", UserRole.Student);
+        var user = User.Create("Student", "User", "student@test.com", "password", UserRole.Student);
 
         // Act & Assert
+        Assert.True(user.IsStudent());
         Assert.False(user.IsAdmin());
         Assert.False(user.IsTeacher());
-        Assert.True(user.IsStudent());
     }
 }

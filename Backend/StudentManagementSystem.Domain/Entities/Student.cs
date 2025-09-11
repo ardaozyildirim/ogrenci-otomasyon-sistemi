@@ -43,7 +43,7 @@ public class Student : BaseEntity
         };
 
         StudentCourses.Add(enrollment);
-        AddDomainEvent(new StudentEnrolledInCourseEvent(Id, courseId, User.FullName, courseName));
+        AddDomainEvent(new StudentEnrolledInCourseEvent(Id, courseId, User?.FullName ?? "Unknown", courseName));
     }
 
     public void UnenrollFromCourse(int courseId)

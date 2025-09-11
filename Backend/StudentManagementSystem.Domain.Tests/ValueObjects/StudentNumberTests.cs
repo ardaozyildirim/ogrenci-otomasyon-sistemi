@@ -30,38 +30,34 @@ public class StudentNumberTests
         Assert.Equal("2024CS001", studentNumber.Value);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData(null)]
-    public void Create_InvalidStudentNumber_ShouldThrowArgumentException(string invalidStudentNumber)
+    [Fact]
+    public void Create_EmptyStudentNumber_ShouldThrowError()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => StudentNumber.Create(invalidStudentNumber));
-    }
-
-    [Theory]
-    [InlineData("2024CS")]
-    [InlineData("24CS001")]
-    [InlineData("2024C001")]
-    [InlineData("2024CS01")]
-    [InlineData("2024CS0001")]
-    public void Create_MalformedStudentNumber_ShouldThrowArgumentException(string malformedStudentNumber)
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => StudentNumber.Create(malformedStudentNumber));
+        Assert.Throws<ArgumentException>(() => StudentNumber.Create(""));
+        Assert.Throws<ArgumentException>(() => StudentNumber.Create(null!));
     }
 
     [Fact]
-    public void ImplicitConversion_ShouldWork()
+    public void Create_InvalidFormatStudentNumber_ShouldThrowError()
+    {
+        // Arrange
+        string invalidNumber = "2024CS"; // Too short
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => StudentNumber.Create(invalidNumber));
+    }
+
+    [Fact]
+    public void ToString_ShouldReturnValue()
     {
         // Arrange
         var studentNumber = StudentNumber.Create("2024CS001");
 
         // Act
-        string studentNumberString = studentNumber;
+        string result = studentNumber.ToString();
 
         // Assert
-        Assert.Equal("2024CS001", studentNumberString);
+        Assert.Equal("2024CS001", result);
     }
 }

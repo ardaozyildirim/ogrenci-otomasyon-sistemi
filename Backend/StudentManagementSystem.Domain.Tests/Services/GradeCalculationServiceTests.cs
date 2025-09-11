@@ -5,17 +5,12 @@ namespace StudentManagementSystem.Domain.Tests.Services;
 
 public class GradeCalculationServiceTests
 {
-    private readonly IGradeCalculationService _gradeCalculationService;
-
-    public GradeCalculationServiceTests()
-    {
-        _gradeCalculationService = new GradeCalculationService();
-    }
 
     [Fact]
-    public void CalculateAverageGrade_WithGrades_ShouldReturnCorrectAverage()
+    public void CalculateAverageGrade_ShouldReturnCorrectAverage()
     {
         // Arrange
+        var service = new GradeCalculationService();
         var grades = new List<Grade>
         {
             CreateGrade(80),
@@ -24,44 +19,89 @@ public class GradeCalculationServiceTests
         };
 
         // Act
-        var average = _gradeCalculationService.CalculateAverageGrade(grades);
+        var average = service.CalculateAverageGrade(grades);
 
         // Assert
         Assert.Equal(80, average);
     }
 
     [Fact]
-    public void CalculateAverageGrade_EmptyGrades_ShouldReturnZero()
+    public void CalculateAverageGrade_EmptyList_ShouldReturnZero()
     {
         // Arrange
+        var service = new GradeCalculationService();
         var grades = new List<Grade>();
 
         // Act
-        var average = _gradeCalculationService.CalculateAverageGrade(grades);
+        var average = service.CalculateAverageGrade(grades);
 
         // Assert
         Assert.Equal(0, average);
     }
 
     [Fact]
-    public void GetLetterGrade_ValidScores_ShouldReturnCorrectLetterGrade()
+    public void GetLetterGrade_ScoreAbove90_ShouldReturnA()
     {
-        // Arrange & Act & Assert
-        Assert.Equal("A", _gradeCalculationService.GetLetterGrade(95));
-        Assert.Equal("B", _gradeCalculationService.GetLetterGrade(85));
-        Assert.Equal("C", _gradeCalculationService.GetLetterGrade(75));
-        Assert.Equal("D", _gradeCalculationService.GetLetterGrade(65));
-        Assert.Equal("F", _gradeCalculationService.GetLetterGrade(55));
+        // Arrange
+        var service = new GradeCalculationService();
+        
+        // Act
+        string letterGrade = service.GetLetterGrade(95);
+        
+        // Assert
+        Assert.Equal("A", letterGrade);
+    }
+    
+    [Fact]
+    public void GetLetterGrade_ScoreBetween80And89_ShouldReturnB()
+    {
+        // Arrange
+        var service = new GradeCalculationService();
+        
+        // Act
+        string letterGrade = service.GetLetterGrade(85);
+        
+        // Assert
+        Assert.Equal("B", letterGrade);
+    }
+    
+    [Fact]
+    public void GetLetterGrade_ScoreBelow60_ShouldReturnF()
+    {
+        // Arrange
+        var service = new GradeCalculationService();
+        
+        // Act
+        string letterGrade = service.GetLetterGrade(55);
+        
+        // Assert
+        Assert.Equal("F", letterGrade);
     }
 
     [Fact]
-    public void IsPassingGrade_ValidScores_ShouldReturnCorrectResult()
+    public void IsPassingGrade_Score70_ShouldReturnTrue()
     {
-        // Arrange & Act & Assert
-        Assert.True(_gradeCalculationService.IsPassingGrade(70));
-        Assert.True(_gradeCalculationService.IsPassingGrade(60));
-        Assert.False(_gradeCalculationService.IsPassingGrade(59));
-        Assert.False(_gradeCalculationService.IsPassingGrade(0));
+        // Arrange
+        var service = new GradeCalculationService();
+        
+        // Act
+        bool isPassing = service.IsPassingGrade(70);
+        
+        // Assert
+        Assert.True(isPassing);
+    }
+    
+    [Fact]
+    public void IsPassingGrade_Score59_ShouldReturnFalse()
+    {
+        // Arrange
+        var service = new GradeCalculationService();
+        
+        // Act
+        bool isPassing = service.IsPassingGrade(59);
+        
+        // Assert
+        Assert.False(isPassing);
     }
 
     private static Grade CreateGrade(decimal score)

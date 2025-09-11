@@ -20,10 +20,12 @@ public record StudentNumber
         if (string.IsNullOrWhiteSpace(studentNumber))
             throw new ArgumentException("Student number cannot be null or empty", nameof(studentNumber));
 
-        if (!StudentNumberRegex.IsMatch(studentNumber))
+        var upperStudentNumber = studentNumber.ToUpperInvariant();
+        
+        if (!StudentNumberRegex.IsMatch(upperStudentNumber))
             throw new ArgumentException("Student number must be in format: YYYYAAXXX (e.g., 2024CS001)", nameof(studentNumber));
 
-        return new StudentNumber(studentNumber.ToUpperInvariant());
+        return new StudentNumber(upperStudentNumber);
     }
 
     public static implicit operator string(StudentNumber studentNumber) => studentNumber.Value;

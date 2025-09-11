@@ -69,7 +69,7 @@ public class StudentTests
         var gpa = student.CalculateGPA();
 
         // Assert
-        Assert.Equal(3.0m, gpa); // (3.0 + 4.0) / 2 = 3.5, but we have 6 credits total
+        Assert.Equal(3.5m, gpa); // (3.0 + 4.0) / 2 = 3.5
     }
 
     [Fact]
