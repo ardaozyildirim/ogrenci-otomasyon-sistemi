@@ -57,7 +57,7 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <Link href="/students" className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -73,9 +73,9 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <Link href="/teachers" className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -91,9 +91,9 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <Link href="/courses" className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -109,9 +109,9 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
+          <Link href="/grades" className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Quick Actions */}
