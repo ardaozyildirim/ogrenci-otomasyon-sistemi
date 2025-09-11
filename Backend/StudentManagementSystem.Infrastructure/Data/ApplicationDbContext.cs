@@ -9,6 +9,13 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        // Temporarily suppress pending model changes warning
+        optionsBuilder.ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
+
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Student> Students { get; set; } = null!;
     public DbSet<Teacher> Teachers { get; set; } = null!;

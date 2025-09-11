@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using StudentManagementSystem.Application;
 using StudentManagementSystem.Infrastructure;
 using StudentManagementSystem.Infrastructure.Data;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -118,6 +119,9 @@ if (app.Environment.IsProduction())
         {
             context.Database.Migrate();
             app.Logger.LogInformation("Database migrations applied successfully.");
+            
+            // Seed initial data if needed
+            await SeedData(context, app.Logger);
         }
         catch (Exception ex)
         {
@@ -127,3 +131,53 @@ if (app.Environment.IsProduction())
 }
 
 app.Run();
+
+// Seed data method
+async Task SeedData(ApplicationDbContext context, ILogger logger)
+{
+    try
+    {
+        // Add missing Status column if it doesn't exist
+        await context.Database.ExecuteSqlRawAsync(@"
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'Courses' AND column_name = 'Status') THEN
+                    ALTER TABLE ""Courses"" ADD COLUMN ""Status"" integer NOT NULL DEFAULT 1;
+                END IF;
+            END $$;
+        ");
+        
+        logger.LogInformation("Database schema updated.");
+        
+        // Check if we already have data
+        if (await context.Teachers.AnyAsync())
+        {
+            logger.LogInformation("Seed data already exists.");
+            return;
+        }
+
+        // Create a sample teacher
+        var teacher = new StudentManagementSystem.Domain.Entities.Teacher
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@university.com",
+            EmployeeId = "EMP001",
+            Department = "Computer Science",
+            Specialty = "Software Engineering",
+            PhoneNumber = "123-456-7890",
+            HireDate = new DateTime(2020, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        context.Teachers.Add(teacher);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seed data created successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error occurred while seeding data.");
+    }
+}

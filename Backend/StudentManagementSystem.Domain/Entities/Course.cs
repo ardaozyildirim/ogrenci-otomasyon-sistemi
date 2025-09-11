@@ -1,4 +1,5 @@
 using StudentManagementSystem.Domain.Common;
+using StudentManagementSystem.Domain.Enums;
 
 namespace StudentManagementSystem.Domain.Entities;
 
@@ -10,6 +11,7 @@ public class Course : BaseEntity
     public int Credits { get; set; }
     public int TeacherId { get; set; }
     public int Capacity { get; set; } = 30;
+    public CourseStatus Status { get; set; } = CourseStatus.NotStarted;
     public bool IsActive { get; set; } = true;
 
     // Navigation properties

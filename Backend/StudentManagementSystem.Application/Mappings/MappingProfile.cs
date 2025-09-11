@@ -37,5 +37,21 @@ public class MappingProfile : Profile
             
         CreateMap<UpdateTeacherDto, Teacher>()
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+        // Course mappings
+        CreateMap<Course, CourseDto>()
+            .ForMember(dest => dest.TeacherName, opt => opt.MapFrom(src => $"{src.Teacher.FirstName} {src.Teacher.LastName}"))
+            .ForMember(dest => dest.EnrolledStudentsCount, opt => opt.Ignore()); // Will be set manually
+        
+        CreateMap<CreateCourseDto, Course>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+            
+        CreateMap<UpdateCourseDto, Course>()
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+        
+        CreateMap<Student, CourseStudentDto>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+            .ForMember(dest => dest.EnrollmentDate, opt => opt.MapFrom(src => src.EnrollmentDate));
     }
 }
