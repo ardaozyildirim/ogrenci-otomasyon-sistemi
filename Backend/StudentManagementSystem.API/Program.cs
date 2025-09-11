@@ -5,7 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using StudentManagementSystem.Application;
 using StudentManagementSystem.Infrastructure;
 using StudentManagementSystem.Infrastructure.Data;
-using System.Text;
+using StudentManagementSystem.Application.Common.Interfaces; // Added for IPasswordHashService
+using Microsoft.Extensions.DependencyInjection; // Added for GetService
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -149,6 +150,45 @@ async Task SeedData(ApplicationDbContext context, ILogger logger)
         ");
         
         logger.LogInformation("Database schema updated.");
+        
+        // Check if we already have an admin user
+        if (!await context.Users.AnyAsync(u => u.Email == "admin@system.com"))
+        {
+            // Create admin user
+            var adminUser = new StudentManagementSystem.Domain.Entities.User
+            {
+                FirstName = "Admin",
+                LastName = "User",
+                Email = "admin@system.com",
+                PasswordHash = "TEMP_HASH_FOR_RESET", // Placeholder - will be updated below
+                Role = StudentManagementSystem.Domain.Enums.UserRole.Admin,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            context.Users.Add(adminUser);
+            await context.SaveChangesAsync();
+            
+            // Now update the password hash using the password service (if available)
+            try
+            {
+                var passwordHashService = app.Services.GetService<IPasswordHashService>();
+                if (passwordHashService != null)
+                {
+                    adminUser.PasswordHash = passwordHashService.HashPassword("admin123");
+                    await context.SaveChangesAsync();
+                    logger.LogInformation("Admin user created with email: admin@system.com and password: admin123 (hashed properly)");
+                }
+                else
+                {
+                    logger.LogWarning("Password hash service not available, admin user created with placeholder hash");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error hashing admin password, using placeholder");
+            }
+        }
         
         // Check if we already have teachers
         if (!await context.Teachers.AnyAsync())

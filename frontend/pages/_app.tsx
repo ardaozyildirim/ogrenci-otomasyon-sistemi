@@ -2,6 +2,8 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { AuthProvider } from "@/utils/authContext";
+import { ThemeProvider } from "@/utils/themeContext";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -22,5 +24,11 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [router]);
 
-  return <Component {...pageProps} />;
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <Component {...pageProps} />
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }

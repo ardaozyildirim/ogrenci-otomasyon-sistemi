@@ -41,5 +41,11 @@ EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
+# Create a script to apply migrations and start the application
+RUN echo '#!/bin/bash\n\
+dotnet ef database update\n\
+exec dotnet StudentManagementSystem.API.dll' > /app/start.sh && \
+chmod +x /app/start.sh
+
 # Start the application
-ENTRYPOINT ["dotnet", "StudentManagementSystem.API.dll"]
+ENTRYPOINT ["/app/start.sh"]
