@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: student_management_db
+    environment:
+      POSTGRES_DB: student_management_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Student123!
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - student_management_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d student_management_system"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Student Management API
+  api:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: student_management_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=student_management_system;Username=postgres;Password=Student123!;Port=5432
+      - JwtSettings__SecretKey=YourVeryLongSecretKeyThatIsAtLeast256BitsLong123456789StudentManagement2024
+      - JwtSettings__Issuer=StudentManagementSystem
+      - JwtSettings__Audience=StudentManagementSystem
+      - JwtSettings__ExpirationHours=24
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - student_management_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  student_management_network:
+    driver: bridge

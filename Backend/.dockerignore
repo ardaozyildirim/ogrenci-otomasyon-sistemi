@@ -1,0 +1,54 @@
+# .NET Build Artifacts
+**/bin/
+**/obj/
+**/out/
+
+# Visual Studio Files
+**/.vs/
+**/.vscode/
+*.user
+*.suo
+*.cache
+*.docstates
+
+# NuGet Packages
+**/packages/
+*.nupkg
+
+# Test Results
+**/TestResults/
+**/test-results/
+*.trx
+*.coverage
+*.coveragexml
+
+# Logs
+**/logs/
+**/*.log
+
+# Runtime Files
+**/publish/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+**/*.md
+
+# Environment Files
+.env
+.env.local
+.env.production
+
+# Docker Files (don't copy docker files into image)
+**/Dockerfile*
+**/docker-compose*
+.dockerignore
+
+# Temporary Files
+**/.tmp/
+**/*.tmp
+**/*.temp

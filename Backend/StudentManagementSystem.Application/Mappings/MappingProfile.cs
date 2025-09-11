@@ -15,5 +15,16 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+
+        // Student mappings
+        CreateMap<Student, StudentDto>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"));
+        
+        CreateMap<CreateStudentDto, Student>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+            
+        CreateMap<UpdateStudentDto, Student>()
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
     }
 }

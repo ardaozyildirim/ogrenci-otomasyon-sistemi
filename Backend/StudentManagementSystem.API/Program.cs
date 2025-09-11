@@ -1,8 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StudentManagementSystem.Application;
 using StudentManagementSystem.Infrastructure;
+using StudentManagementSystem.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,7 +86,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -105,5 +107,23 @@ app.UseAuthorization();
 
 // Map controllers
 app.MapControllers();
+
+// Apply database migrations automatically in production
+if (app.Environment.IsProduction())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        try
+        {
+            context.Database.Migrate();
+            app.Logger.LogInformation("Database migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "An error occurred while applying database migrations.");
+        }
+    }
+}
 
 app.Run();
