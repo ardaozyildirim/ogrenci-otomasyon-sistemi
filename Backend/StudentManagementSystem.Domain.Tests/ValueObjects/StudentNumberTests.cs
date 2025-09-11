@@ -5,59 +5,57 @@ namespace StudentManagementSystem.Domain.Tests.ValueObjects;
 public class StudentNumberTests
 {
     [Fact]
-    public void Create_ValidStudentNumber_ShouldReturnStudentNumber()
+    public void CreateStudentNumber_WithValidFormat_Works()
     {
-        // Arrange
-        var validStudentNumber = "2024CS001";
+        // Use a realistic student number
+        var validNumber = "2023CS157";
 
-        // Act
-        var studentNumber = StudentNumber.Create(validStudentNumber);
+        // Create the student number
+        var studentNumber = StudentNumber.Create(validNumber);
 
-        // Assert
-        Assert.Equal("2024CS001", studentNumber.Value);
+        // Should match exactly
+        Assert.Equal("2023CS157", studentNumber.Value);
     }
 
     [Fact]
-    public void Create_ValidStudentNumberWithLowerCase_ShouldConvertToUpperCase()
+    public void CreateStudentNumber_WithLowercase_ConvertsToUppercase()
     {
-        // Arrange
-        var validStudentNumber = "2024cs001";
+        // Try with lowercase department code
+        var lowercaseNumber = "2022ee089";
 
-        // Act
-        var studentNumber = StudentNumber.Create(validStudentNumber);
+        // Should automatically convert to uppercase
+        var studentNumber = StudentNumber.Create(lowercaseNumber);
 
-        // Assert
-        Assert.Equal("2024CS001", studentNumber.Value);
+        // Verify conversion happened
+        Assert.Equal("2022EE089", studentNumber.Value);
     }
 
     [Fact]
-    public void Create_EmptyStudentNumber_ShouldThrowError()
+    public void CreateStudentNumber_WithEmptyInput_ThrowsException()
     {
-        // Act & Assert
+        // These should all fail
         Assert.Throws<ArgumentException>(() => StudentNumber.Create(""));
         Assert.Throws<ArgumentException>(() => StudentNumber.Create(null!));
     }
 
     [Fact]
-    public void Create_InvalidFormatStudentNumber_ShouldThrowError()
+    public void CreateStudentNumber_WithWrongFormat_ThrowsException()
     {
-        // Arrange
-        string invalidNumber = "2024CS"; // Too short
+        // Try with obviously wrong format - too short
+        var badNumber = "2023CS";
 
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => StudentNumber.Create(invalidNumber));
+        // Should reject invalid format
+        Assert.Throws<ArgumentException>(() => StudentNumber.Create(badNumber));
     }
 
     [Fact]
-    public void ToString_ShouldReturnValue()
+    public void ToString_ReturnsTheActualValue()
     {
-        // Arrange
-        var studentNumber = StudentNumber.Create("2024CS001");
+        // Create a student number
+        var studentNumber = StudentNumber.Create("2021IT234");
 
-        // Act
-        string result = studentNumber.ToString();
-
-        // Assert
-        Assert.Equal("2024CS001", result);
+        // ToString should give us the value back
+        var stringValue = studentNumber.ToString();
+        Assert.Equal("2021IT234", stringValue);
     }
 }

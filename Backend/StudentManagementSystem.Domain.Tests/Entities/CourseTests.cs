@@ -6,83 +6,98 @@ namespace StudentManagementSystem.Domain.Tests.Entities;
 public class CourseTests
 {
     [Fact]
-    public void Create_ValidCourse_ShouldWork()
+    public void CreateCourse_WithValidData_ReturnsCorrectCourse()
     {
-        // Arrange
-        string courseName = "Math 101";
-        string courseCode = "MATH101";
-        int credits = 3;
-        int teacherId = 1;
+        // Given
+        var name = "Introduction to Computer Science";
+        var code = "CS101";
+        var creditHours = 4;
+        var instructorId = 5;
 
-        // Act
-        var course = Course.Create(courseName, courseCode, credits, teacherId);
+        // When
+        var newCourse = Course.Create(name, code, creditHours, instructorId);
 
-        // Assert
-        Assert.Equal(courseName, course.Name);
-        Assert.Equal(courseCode, course.Code);
-        Assert.Equal(credits, course.Credits);
-        Assert.Equal(teacherId, course.TeacherId);
-        Assert.Equal(CourseStatus.NotStarted, course.Status);
+        // Then
+        Assert.Equal(name, newCourse.Name);
+        Assert.Equal(code, newCourse.Code);
+        Assert.Equal(creditHours, newCourse.Credits);
+        Assert.Equal(instructorId, newCourse.TeacherId);
+        Assert.Equal(CourseStatus.NotStarted, newCourse.Status);
     }
 
     [Fact]
-    public void StartCourse_ShouldChangeStatus()
+    public void StartCourse_ChangesStatusToInProgress()
     {
-        // Arrange
-        var course = Course.Create("Math 101", "MATH101", 3, 1);
+        // Setup a new course first
+        var physics = Course.Create("Physics 201", "PHYS201", 3, 12);
 
-        // Act
-        course.StartCourse();
+        // Start the course
+        physics.StartCourse();
 
-        // Assert
-        Assert.Equal(CourseStatus.InProgress, course.Status);
-        Assert.NotNull(course.StartDate);
+        // Check if status changed and start date is set
+        Assert.Equal(CourseStatus.InProgress, physics.Status);
+        Assert.True(physics.StartDate.HasValue);
+        Assert.True(physics.StartDate.Value <= DateTime.Now);
     }
 
     [Fact]
-    public void CompleteCourse_ShouldChangeStatus()
+    public void CompleteCourse_WhenStarted_MarksAsCompleted()
     {
-        // Arrange
-        var course = Course.Create("Math 101", "MATH101", 3, 1);
-        course.StartCourse();
+        // Create and start a course
+        var biology = Course.Create("Biology Fundamentals", "BIO101", 3, 8);
+        biology.StartCourse();
 
-        // Act
-        course.CompleteCourse();
+        // Complete the course
+        biology.CompleteCourse();
 
-        // Assert
-        Assert.Equal(CourseStatus.Completed, course.Status);
-        Assert.NotNull(course.EndDate);
+        // Verify completion
+        Assert.Equal(CourseStatus.Completed, biology.Status);
+        Assert.NotNull(biology.EndDate);
+        Assert.True(biology.EndDate!.Value >= biology.StartDate!.Value);
     }
 
     [Fact]
-    public void EnrollStudent_ShouldWork()
+    public void EnrollStudent_InActiveCourse_AddsStudentSuccessfully()
     {
-        // Arrange
-        var course = Course.Create("Math 101", "MATH101", 3, 1);
-        course.StartCourse();
-        int studentId = 1;
+        // Prepare an active course
+        var chemistry = Course.Create("Organic Chemistry", "CHEM301", 4, 15);
+        chemistry.StartCourse();
+        var studentId = 42;
 
-        // Act
-        course.EnrollStudent(studentId);
+        // Enroll the student
+        chemistry.EnrollStudent(studentId);
 
-        // Assert
-        Assert.Equal(1, course.GetEnrolledStudentCount());
+        // Confirm enrollment
+        var enrolledCount = chemistry.GetEnrolledStudentCount();
+        Assert.Equal(1, enrolledCount);
     }
 
     [Fact]
-    public void GetEnrolledStudentCount_ShouldReturnCorrectNumber()
+    public void GetEnrolledStudentCount_WithMultipleStudents_ReturnsCorrectNumber()
     {
-        // Arrange
-        var course = Course.Create("Math 101", "MATH101", 3, 1);
-        course.StartCourse();
+        // Set up course and get it running
+        var history = Course.Create("World History", "HIST102", 3, 7);
+        history.StartCourse();
         
-        course.EnrollStudent(1);
-        course.EnrollStudent(2);
+        // Add a few students
+        history.EnrollStudent(101);
+        history.EnrollStudent(205);
+        history.EnrollStudent(333);
 
-        // Act
-        int count = course.GetEnrolledStudentCount();
+        // Check the count
+        var totalEnrolled = history.GetEnrolledStudentCount();
+        Assert.Equal(3, totalEnrolled);
+    }
 
-        // Assert
-        Assert.Equal(2, count);
+    [Fact]
+    public void CourseCreation_SetsInitialStatusCorrectly()
+    {
+        // Create any course
+        var literature = Course.Create("English Literature", "ENG201", 3, 22);
+        
+        // New courses should start in NotStarted status
+        Assert.Equal(CourseStatus.NotStarted, literature.Status);
+        Assert.Null(literature.StartDate);
+        Assert.Null(literature.EndDate);
     }
 }

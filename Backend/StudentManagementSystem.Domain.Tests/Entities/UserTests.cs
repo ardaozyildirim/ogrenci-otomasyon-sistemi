@@ -6,87 +6,97 @@ namespace StudentManagementSystem.Domain.Tests.Entities;
 public class UserTests
 {
     [Fact]
-    public void Create_ValidUser_ShouldWork()
+    public void CreateUser_WithValidInformation_BuildsUserCorrectly()
     {
-        // Arrange
-        string firstName = "John";
-        string lastName = "Doe";
-        string email = "john@test.com";
-        string password = "password123";
-        UserRole role = UserRole.Student;
+        // Set up user details
+        var firstName = "Sarah";
+        var lastName = "Johnson";
+        var email = "sarah.johnson@university.edu";
+        var password = "SecurePass2024";
+        var role = UserRole.Teacher;
 
-        // Act
-        var user = User.Create(firstName, lastName, email, password, role);
+        // Create the user
+        var newUser = User.Create(firstName, lastName, email, password, role);
 
-        // Assert
-        Assert.Equal(firstName, user.FirstName);
-        Assert.Equal(lastName, user.LastName);
-        Assert.Equal(email, user.Email);
-        Assert.Equal(password, user.PasswordHash);
-        Assert.Equal(role, user.Role);
-        Assert.Equal("John Doe", user.FullName);
+        // Verify all properties
+        Assert.Equal(firstName, newUser.FirstName);
+        Assert.Equal(lastName, newUser.LastName);
+        Assert.Equal(email, newUser.Email);
+        Assert.Equal(password, newUser.PasswordHash);
+        Assert.Equal(role, newUser.Role);
+        Assert.Equal("Sarah Johnson", newUser.FullName);
     }
 
     [Fact]
-    public void Create_EmptyFirstName_ShouldThrowError()
+    public void CreateUser_WithEmptyFirstName_ThrowsException()
     {
-        // Act & Assert
+        // Try to create user with blank first name - this should fail
         Assert.Throws<ArgumentException>(() => 
-            User.Create("", "Doe", "john@test.com", "password", UserRole.Student));
+            User.Create("", "Williams", "test@school.com", "mypassword", UserRole.Student));
     }
 
     [Fact]
-    public void UpdateProfile_ShouldChangeUserInfo()
+    public void UpdateProfile_ChangesNameInformation()
     {
-        // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "password", UserRole.Student);
-        string newFirstName = "Jane";
-        string newLastName = "Smith";
+        // Start with existing user
+        var user = User.Create("Michael", "Brown", "m.brown@college.edu", "password123", UserRole.Student);
+        var updatedFirstName = "Mike";
+        var updatedLastName = "Brown-Smith";
 
-        // Act
-        user.UpdateProfile(newFirstName, newLastName);
+        // Update their profile
+        user.UpdateProfile(updatedFirstName, updatedLastName);
 
-        // Assert
-        Assert.Equal(newFirstName, user.FirstName);
-        Assert.Equal(newLastName, user.LastName);
+        // Check the changes took effect
+        Assert.Equal(updatedFirstName, user.FirstName);
+        Assert.Equal(updatedLastName, user.LastName);
         Assert.NotNull(user.UpdatedAt);
     }
 
     [Fact]
-    public void ChangePassword_ShouldUpdatePassword()
+    public void ChangePassword_UpdatesUserPassword()
     {
-        // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "oldpassword", UserRole.Student);
-        string newPassword = "newpassword";
+        // Create user with initial password
+        var user = User.Create("Emma", "Davis", "emma.davis@uni.edu", "oldPassword123", UserRole.Student);
+        var betterPassword = "NewSecurePassword2024!";
 
-        // Act
-        user.ChangePassword(newPassword);
+        // Change to new password
+        user.ChangePassword(betterPassword);
 
-        // Assert
-        Assert.Equal(newPassword, user.PasswordHash);
+        // Verify password was updated
+        Assert.Equal(betterPassword, user.PasswordHash);
     }
 
     [Fact]
-    public void IsAdmin_AdminUser_ShouldReturnTrue()
+    public void IsAdmin_ForAdminUser_ReturnsTrue()
     {
-        // Arrange
-        var user = User.Create("Admin", "User", "admin@test.com", "password", UserRole.Admin);
+        // Create an admin user
+        var adminUser = User.Create("Robert", "Chen", "r.chen@admin.edu", "adminpass", UserRole.Admin);
 
-        // Act & Assert
-        Assert.True(user.IsAdmin());
-        Assert.False(user.IsTeacher());
-        Assert.False(user.IsStudent());
+        // Test role checking methods
+        Assert.True(adminUser.IsAdmin());
+        Assert.False(adminUser.IsTeacher());
+        Assert.False(adminUser.IsStudent());
     }
 
     [Fact]
-    public void IsStudent_StudentUser_ShouldReturnTrue()
+    public void IsStudent_ForStudentUser_ReturnsTrue()
     {
-        // Arrange
-        var user = User.Create("Student", "User", "student@test.com", "password", UserRole.Student);
+        // Set up a student account
+        var studentUser = User.Create("Lisa", "Rodriguez", "lisa.r@student.edu", "studentpass", UserRole.Student);
 
-        // Act & Assert
-        Assert.True(user.IsStudent());
-        Assert.False(user.IsAdmin());
-        Assert.False(user.IsTeacher());
+        // Verify role identification works correctly
+        Assert.True(studentUser.IsStudent());
+        Assert.False(studentUser.IsAdmin());
+        Assert.False(studentUser.IsTeacher());
+    }
+
+    [Fact] 
+    public void UserFullName_CombinesFirstAndLastName()
+    {
+        // Create user with specific names
+        var user = User.Create("Alexander", "Smith-Johnson", "alex@college.edu", "secure123", UserRole.Teacher);
+        
+        // Full name should combine both parts
+        Assert.Equal("Alexander Smith-Johnson", user.FullName);
     }
 }

@@ -7,49 +7,48 @@ public class GradeCalculationServiceTests
 {
 
     [Fact]
-    public void CalculateAverageGrade_ShouldReturnCorrectAverage()
+    public void CalculateAverageGrade_WithThreeGrades_GetsCorrectResult()
     {
-        // Arrange
-        var service = new GradeCalculationService();
-        var grades = new List<Grade>
+        // Set up the service and some test grades
+        var calculator = new GradeCalculationService();
+        var studentGrades = new List<Grade>
         {
-            CreateGrade(80),
-            CreateGrade(90),
-            CreateGrade(70)
+            CreateGrade(82),
+            CreateGrade(91),
+            CreateGrade(67)
         };
 
-        // Act
-        var average = service.CalculateAverageGrade(grades);
+        // Calculate the average
+        var averageScore = calculator.CalculateAverageGrade(studentGrades);
 
-        // Assert
-        Assert.Equal(80, average);
+        // Should be 80 (82+91+67)/3 = 240/3 = 80
+        Assert.Equal(80, averageScore);
     }
 
     [Fact]
-    public void CalculateAverageGrade_EmptyList_ShouldReturnZero()
+    public void CalculateAverageGrade_WithNoGrades_ReturnsZero()
     {
-        // Arrange
-        var service = new GradeCalculationService();
-        var grades = new List<Grade>();
+        // Create service with empty grade list
+        var calculator = new GradeCalculationService();
+        var emptyGradeList = new List<Grade>();
 
-        // Act
-        var average = service.CalculateAverageGrade(grades);
+        // Calculate average of nothing
+        var result = calculator.CalculateAverageGrade(emptyGradeList);
 
-        // Assert
-        Assert.Equal(0, average);
+        // Should be zero when no grades exist
+        Assert.Equal(0, result);
     }
 
     [Fact]
-    public void GetLetterGrade_ScoreAbove90_ShouldReturnA()
+    public void GetLetterGrade_WithExcellentScore_ReturnsA()
     {
-        // Arrange
-        var service = new GradeCalculationService();
+        // Test with a score that should definitely be an A
+        var gradeService = new GradeCalculationService();
         
-        // Act
-        string letterGrade = service.GetLetterGrade(95);
+        // 97 is clearly an A grade
+        string letter = gradeService.GetLetterGrade(97);
         
-        // Assert
-        Assert.Equal("A", letterGrade);
+        Assert.Equal("A", letter);
     }
     
     [Fact]

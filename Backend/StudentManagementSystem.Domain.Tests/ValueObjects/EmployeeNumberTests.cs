@@ -5,46 +5,44 @@ namespace StudentManagementSystem.Domain.Tests.ValueObjects;
 public class EmployeeNumberTests
 {
     [Fact]
-    public void Create_ValidEmployeeNumber_ShouldWork()
+    public void CreateEmployeeNumber_WithValidFormat_WorksCorrectly()
     {
-        // Arrange
-        string validNumber = "EMP0001";
+        // Try with a valid employee number
+        string validNumber = "EMP0142";
 
-        // Act
+        // Create the employee number
         var employeeNumber = EmployeeNumber.Create(validNumber);
 
-        // Assert
+        // Should store the value correctly
         Assert.Equal(validNumber, employeeNumber.Value);
     }
 
     [Fact]
-    public void Create_InvalidEmployeeNumber_ShouldThrowError()
+    public void CreateEmployeeNumber_WithBadFormat_ThrowsError()
     {
-        // Arrange
-        string invalidNumber = "EMP001"; // Missing one digit
+        // This format is missing a digit - should fail
+        string invalidNumber = "EMP001";
 
-        // Act & Assert
+        // Should reject the invalid format
         Assert.Throws<ArgumentException>(() => EmployeeNumber.Create(invalidNumber));
     }
 
     [Fact]
-    public void Create_EmptyEmployeeNumber_ShouldThrowError()
+    public void CreateEmployeeNumber_WithNullOrEmpty_ThrowsError()
     {
-        // Act & Assert
+        // Both empty and null should be rejected
         Assert.Throws<ArgumentException>(() => EmployeeNumber.Create(""));
         Assert.Throws<ArgumentException>(() => EmployeeNumber.Create(null!));
     }
 
     [Fact]
-    public void ToString_ShouldReturnValue()
+    public void ToString_GivesBackTheValue()
     {
-        // Arrange
-        var employeeNumber = EmployeeNumber.Create("EMP0001");
+        // Create an employee number
+        var employeeNumber = EmployeeNumber.Create("EMP0987");
 
-        // Act
+        // ToString should return the actual value
         string result = employeeNumber.ToString();
-
-        // Assert
-        Assert.Equal("EMP0001", result);
+        Assert.Equal("EMP0987", result);
     }
 }

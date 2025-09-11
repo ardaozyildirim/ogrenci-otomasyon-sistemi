@@ -6,19 +6,19 @@ namespace StudentManagementSystem.Domain.Tests.Entities;
 public class TeacherTests
 {
     [Fact]
-    public void Create_ValidTeacher_ShouldWork()
+    public void CreateTeacher_WithValidData_BuildsTeacherCorrectly()
     {
-        // Arrange
-        int userId = 1;
-        string employeeNumber = "EMP0001";
-        string department = "Computer Science";
-        string specialization = "Software Engineering";
-        DateTime hireDate = DateTime.Now;
+        // Set up teacher information
+        int userId = 23;
+        string employeeNumber = "EMP0256";
+        string department = "Mathematics";
+        string specialization = "Applied Statistics";
+        DateTime hireDate = new DateTime(2018, 9, 15);
 
-        // Act
+        // Create the teacher
         var teacher = Teacher.Create(userId, employeeNumber, department, specialization, hireDate);
 
-        // Assert
+        // Verify all the details
         Assert.Equal(userId, teacher.UserId);
         Assert.Equal(employeeNumber, teacher.EmployeeNumber);
         Assert.Equal(department, teacher.Department);
@@ -27,32 +27,32 @@ public class TeacherTests
     }
 
     [Fact]
-    public void AddCourse_ShouldAddCourseToTeacher()
+    public void AddCourse_AssignsCourseToTeacher()
     {
-        // Arrange
-        var teacher = Teacher.Create(1, "EMP0001", "Computer Science", "Software Engineering", DateTime.Now);
-        var course = Course.Create("Math 101", "MATH101", 3, teacher.Id);
+        // Create a chemistry teacher
+        var teacher = Teacher.Create(11, "EMP0087", "Chemistry", "Organic Chemistry", DateTime.Now.AddYears(-3));
+        var course = Course.Create("General Chemistry", "CHEM101", 4, teacher.Id);
 
-        // Act
+        // Assign course to teacher
         teacher.AddCourse(course);
 
-        // Assert
+        // Teacher should now have this course
         Assert.Single(teacher.Courses);
         Assert.Contains(course, teacher.Courses);
     }
 
     [Fact]
-    public void RemoveCourse_ShouldRemoveCourseFromTeacher()
+    public void RemoveCourse_UnassignsCourseFromTeacher()
     {
-        // Arrange
-        var teacher = Teacher.Create(1, "EMP0001", "Computer Science", "Software Engineering", DateTime.Now);
-        var course = Course.Create("Math 101", "MATH101", 3, teacher.Id);
+        // Set up teacher with a course
+        var teacher = Teacher.Create(33, "EMP0156", "Physics", "Quantum Mechanics", DateTime.Now.AddYears(-5));
+        var course = Course.Create("Intro to Physics", "PHYS100", 3, teacher.Id);
         teacher.AddCourse(course);
 
-        // Act
+        // Remove the course
         teacher.RemoveCourse(course.Id);
 
-        // Assert
+        // Teacher should have no courses now
         Assert.Empty(teacher.Courses);
     }
 
