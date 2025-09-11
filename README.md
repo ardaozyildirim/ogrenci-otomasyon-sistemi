@@ -30,13 +30,11 @@ Uygulama, domain, uygulama mantığı, altyapı ve sunum katmanları için temiz
 
 ### Frontend
 - Next.js 15
-- React 19
 - TypeScript
 - Tailwind CSS
 
 ### Altyapı
 - Docker
-- Docker Compose
 - PostgreSQL 16
 
 ## Sistem Özellikleri
@@ -54,7 +52,7 @@ Uygulama, domain, uygulama mantığı, altyapı ve sunum katmanları için temiz
 ## Gereksinimler
 
 Başlamadan önce aşağıdaki yazılımların kurulu olduğundan emin olun:
-- Docker ve Docker Compose
+- Docker Desktop
 - Git (isteğe bağlı, depoyu klonlamak için)
 
 ## Kurulum ve Yapılandırma
