@@ -2,83 +2,112 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService, TeacherDto, CreateTeacherRequest } from '@/lib/api';
 
-interface Teacher {
-  id: number;
+interface TeacherFormData {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
   employeeNumber: string;
   department: string;
   specialization: string;
-  isActive: boolean;
 }
 
 export default function TeachersPage() {
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teachers, setTeachers] = useState<TeacherDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({
+  const [error, setError] = useState('');
+  const [newTeacher, setNewTeacher] = useState<TeacherFormData>({
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     employeeNumber: '',
     department: '',
     specialization: ''
   });
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // TODO: Load teachers from API
-    setTimeout(() => {
-      setTeachers([
-        {
-          id: 1,
-          firstName: 'Dr. Sarah',
-          lastName: 'Johnson',
-          email: 'sarah.johnson@university.edu',
-          employeeNumber: 'EMP001',
-          department: 'Computer Science',
-          specialization: 'Software Engineering',
-          isActive: true
-        },
-        {
-          id: 2,
-          firstName: 'Prof. Michael',
-          lastName: 'Brown',
-          email: 'michael.brown@university.edu',
-          employeeNumber: 'EMP002',
-          department: 'Mathematics',
-          specialization: 'Applied Mathematics',
-          isActive: true
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    // Wait for auth loading to complete
+    if (isLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
 
-  const handleAddTeacher = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const teacher: Teacher = {
-      id: teachers.length + 1,
-      ...newTeacher,
-      isActive: true
-    };
-    
-    setTeachers([...teachers, teacher]);
-    setNewTeacher({
-      firstName: '',
-      lastName: '',
-      email: '',
-      employeeNumber: '',
-      department: '',
-      specialization: ''
-    });
-    setShowAddForm(false);
+    loadTeachers();
+  }, [isAuthenticated, isLoading, router]);
+
+  const loadTeachers = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getTeachers();
+      // Ensure data is an array
+      setTeachers(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error('Error loading teachers:', err);
+      setError(err.message || 'Failed to load teachers');
+      setTeachers([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteTeacher = (id: number) => {
-    setTeachers(teachers.filter(teacher => teacher.id !== id));
+  const handleAddTeacher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      // First create user
+      const userResponse = await apiService.register({
+        firstName: newTeacher.firstName,
+        lastName: newTeacher.lastName,
+        email: newTeacher.email,
+        password: newTeacher.password,
+        role: 'Teacher'
+      });
+
+      // Then create teacher
+      const teacherData: CreateTeacherRequest = {
+        userId: userResponse.userId,
+        employeeNumber: newTeacher.employeeNumber,
+        department: newTeacher.department,
+        specialization: newTeacher.specialization
+      };
+
+      await apiService.createTeacher(teacherData);
+      
+      // Reset form and reload teachers
+      setNewTeacher({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        employeeNumber: '',
+        department: '',
+        specialization: ''
+      });
+      setShowAddForm(false);
+      await loadTeachers();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create teacher');
+    }
+  };
+
+  const handleDeleteTeacher = async (id: number) => {
+    try {
+      await apiService.deleteTeacher(id);
+      await loadTeachers();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete teacher');
+    }
   };
 
   return (
@@ -111,6 +140,12 @@ export default function TeachersPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="text-gray-500">Loading teachers...</div>
@@ -118,36 +153,32 @@ export default function TeachersPage() {
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {teachers.map((teacher) => (
+              {teachers && teachers.length > 0 ? teachers.map((teacher) => (
                 <li key={teacher.id}>
                   <div className="px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
                           <span className="text-white font-medium">
-                            {teacher.firstName[0]}{teacher.lastName[0]}
+                            {teacher.user?.firstName?.[0] || 'T'}{teacher.user?.lastName?.[0] || 'U'}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {teacher.firstName} {teacher.lastName}
+                          {teacher.user?.firstName || teacher.fullName || 'Unknown'} {teacher.user?.lastName || ''}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {teacher.email} • {teacher.employeeNumber}
+                          {teacher.user?.email || teacher.email || 'No email'} • {teacher.employeeNumber}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {teacher.department} • {teacher.specialization}
+                          {teacher.department || 'No department'} • {teacher.specialization || 'No specialization'}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        teacher.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {teacher.isActive ? 'Active' : 'Inactive'}
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        Active
                       </span>
                       <button
                         onClick={() => handleDeleteTeacher(teacher.id)}
@@ -158,7 +189,11 @@ export default function TeachersPage() {
                     </div>
                   </div>
                 </li>
-              ))}
+              )) : (
+                <li className="px-4 py-8 text-center text-gray-500">
+                  No teachers found
+                </li>
+              )}
             </ul>
           </div>
         )}
@@ -199,6 +234,17 @@ export default function TeachersPage() {
                       required
                       value={newTeacher.email}
                       onChange={(e) => setNewTeacher({...newTeacher, email: e.target.value})}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={newTeacher.password}
+                      onChange={(e) => setNewTeacher({...newTeacher, password: e.target.value})}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>

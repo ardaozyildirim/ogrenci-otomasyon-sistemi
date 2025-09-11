@@ -2,24 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-interface Course {
-  id: number;
-  name: string;
-  code: string;
-  description: string;
-  credits: number;
-  teacherId: number;
-  teacherName: string;
-  status: 'Active' | 'Inactive' | 'Completed';
-  semester: string;
-}
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService, CourseDto, CreateCourseRequest } from '@/lib/api';
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newCourse, setNewCourse] = useState({
+  const [error, setError] = useState('');
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [newCourse, setNewCourse] = useState<CreateCourseRequest>({
     name: '',
     code: '',
     description: '',
@@ -27,78 +20,88 @@ export default function CoursesPage() {
     teacherId: 1,
     semester: 'Fall 2024'
   });
-
-  const teachers = [
-    { id: 1, name: 'Dr. Sarah Johnson' },
-    { id: 2, name: 'Prof. Michael Brown' }
-  ];
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // TODO: Load courses from API
-    setTimeout(() => {
-      setCourses([
-        {
-          id: 1,
-          name: 'Introduction to Programming',
-          code: 'CS101',
-          description: 'Basic programming concepts and algorithms',
-          credits: 3,
-          teacherId: 1,
-          teacherName: 'Dr. Sarah Johnson',
-          status: 'Active',
-          semester: 'Fall 2024'
-        },
-        {
-          id: 2,
-          name: 'Calculus I',
-          code: 'MATH101',
-          description: 'Differential and integral calculus',
-          credits: 4,
-          teacherId: 2,
-          teacherName: 'Prof. Michael Brown',
-          status: 'Active',
-          semester: 'Fall 2024'
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    // Wait for auth loading to complete
+    if (isLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
 
-  const handleAddCourse = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const selectedTeacher = teachers.find(t => t.id === newCourse.teacherId);
-    const course: Course = {
-      id: courses.length + 1,
-      ...newCourse,
-      teacherName: selectedTeacher?.name || '',
-      status: 'Active'
-    };
-    
-    setCourses([...courses, course]);
-    setNewCourse({
-      name: '',
-      code: '',
-      description: '',
-      credits: 3,
-      teacherId: 1,
-      semester: 'Fall 2024'
-    });
-    setShowAddForm(false);
+    loadData();
+  }, [isAuthenticated, isLoading, router]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [coursesData, teachersData] = await Promise.all([
+        apiService.getCourses(),
+        apiService.getTeachers()
+      ]);
+      // Ensure data is arrays
+      setCourses(Array.isArray(coursesData) ? coursesData : []);
+      setTeachers(Array.isArray(teachersData) ? teachersData : []);
+    } catch (err: any) {
+      console.error('Error loading data:', err);
+      setError(err.message || 'Failed to load data');
+      // Set empty arrays on error
+      setCourses([]);
+      setTeachers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteCourse = (id: number) => {
-    setCourses(courses.filter(course => course.id !== id));
+  const handleAddCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      await apiService.createCourse(newCourse);
+      
+      // Reset form and reload data
+      setNewCourse({
+        name: '',
+        code: '',
+        description: '',
+        credits: 3,
+        teacherId: teachers[0]?.id || 1,
+        semester: 'Fall 2024'
+      });
+      setShowAddForm(false);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create course');
+    }
+  };
+
+  const handleDeleteCourse = async (id: number) => {
+    try {
+      await apiService.deleteCourse(id);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete course');
+    }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active':
+    switch (status?.toLowerCase()) {
+      case 'inprogress':
+      case 'in progress':
+      case 'active':
         return 'bg-green-100 text-green-800';
-      case 'Inactive':
+      case 'notstarted':
+      case 'not started':
+      case 'inactive':
         return 'bg-gray-100 text-gray-800';
-      case 'Completed':
+      case 'completed':
         return 'bg-blue-100 text-blue-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -134,6 +137,12 @@ export default function CoursesPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="text-gray-500">Loading courses...</div>
@@ -141,32 +150,32 @@ export default function CoursesPage() {
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {courses.map((course) => (
+              {courses && courses.length > 0 ? courses.map((course) => (
                 <li key={course.id}>
                   <div className="px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center">
                           <span className="text-white font-medium">
-                            {course.code.substring(0, 2)}
+                            {course.code?.substring(0, 2) || 'CO'}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {course.name} ({course.code})
+                          {course.name || 'Unknown Course'} ({course.code || 'N/A'})
                         </div>
                         <div className="text-sm text-gray-500">
-                          {course.description}
+                          {course.description || 'No description available'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {course.teacherName} • {course.credits} credits • {course.semester}
+                          {course.teacherName || 'No teacher assigned'} • {course.credits || 0} credits • {course.semester || course.schedule || 'No schedule'}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(course.status)}`}>
-                        {course.status}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(course.status || 'Inactive')}`}>
+                        {course.status || 'Inactive'}
                       </span>
                       <button
                         onClick={() => handleDeleteCourse(course.id)}
@@ -177,7 +186,11 @@ export default function CoursesPage() {
                     </div>
                   </div>
                 </li>
-              ))}
+              )) : (
+                <li className="px-4 py-8 text-center text-gray-500">
+                  No courses found
+                </li>
+              )}
             </ul>
           </div>
         )}
@@ -245,7 +258,7 @@ export default function CoursesPage() {
                     >
                       {teachers.map(teacher => (
                         <option key={teacher.id} value={teacher.id}>
-                          {teacher.name}
+                          {teacher.user.firstName} {teacher.user.lastName}
                         </option>
                       ))}
                     </select>

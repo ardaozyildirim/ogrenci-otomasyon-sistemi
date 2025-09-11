@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -10,9 +11,11 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'Student'
+    role: 'Student' as 'Admin' | 'Teacher' | 'Student'
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { register } = useAuth();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -24,25 +27,21 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
     
     setLoading(true);
     
     try {
-      // TODO: API call will be added later
-      console.log('Register attempt:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to login
-      router.push('/login');
-    } catch (error) {
-      console.error('Registration failed:', error);
+      const { confirmPassword, ...registerData } = formData;
+      await register(registerData);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -156,6 +155,12 @@ export default function RegisterPage() {
               />
             </div>
           </div>
+
+          {error && (
+            <div className="text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
 
           <div>
             <button

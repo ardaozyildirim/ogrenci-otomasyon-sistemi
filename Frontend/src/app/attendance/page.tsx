@@ -2,105 +2,92 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-interface Attendance {
-  id: number;
-  studentId: number;
-  studentName: string;
-  courseId: number;
-  courseName: string;
-  date: string;
-  status: 'Present' | 'Absent' | 'Late' | 'Excused';
-  notes?: string;
-}
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService, AttendanceDto, CreateAttendanceRequest } from '@/lib/api';
 
 export default function AttendancePage() {
-  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newAttendance, setNewAttendance] = useState({
+  const [error, setError] = useState('');
+  const [students, setStudents] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [newAttendance, setNewAttendance] = useState<CreateAttendanceRequest>({
     studentId: 1,
     courseId: 1,
     date: new Date().toISOString().split('T')[0],
-    status: 'Present' as const,
+    status: 'Present',
     notes: ''
   });
-
-  const students = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' }
-  ];
-
-  const courses = [
-    { id: 1, name: 'Introduction to Programming' },
-    { id: 2, name: 'Calculus I' }
-  ];
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // TODO: Load attendance from API
-    setTimeout(() => {
-      setAttendance([
-        {
-          id: 1,
-          studentId: 1,
-          studentName: 'John Doe',
-          courseId: 1,
-          courseName: 'Introduction to Programming',
-          date: '2024-10-15',
-          status: 'Present',
-          notes: ''
-        },
-        {
-          id: 2,
-          studentId: 2,
-          studentName: 'Jane Smith',
-          courseId: 2,
-          courseName: 'Calculus I',
-          date: '2024-10-15',
-          status: 'Late',
-          notes: 'Traffic delay'
-        },
-        {
-          id: 3,
-          studentId: 1,
-          studentName: 'John Doe',
-          courseId: 1,
-          courseName: 'Introduction to Programming',
-          date: '2024-10-16',
-          status: 'Absent',
-          notes: 'Sick leave'
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    // Wait for auth loading to complete
+    if (isLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
 
-  const handleAddAttendance = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const selectedStudent = students.find(s => s.id === newAttendance.studentId);
-    const selectedCourse = courses.find(c => c.id === newAttendance.courseId);
-    
-    const attendanceRecord: Attendance = {
-      id: attendance.length + 1,
-      ...newAttendance,
-      studentName: selectedStudent?.name || '',
-      courseName: selectedCourse?.name || ''
-    };
-    
-    setAttendance([...attendance, attendanceRecord]);
-    setNewAttendance({
-      studentId: 1,
-      courseId: 1,
-      date: new Date().toISOString().split('T')[0],
-      status: 'Present',
-      notes: ''
-    });
-    setShowAddForm(false);
+    loadData();
+  }, [isAuthenticated, isLoading, router]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [attendanceData, studentsData, coursesData] = await Promise.all([
+        apiService.getAttendance(),
+        apiService.getStudents(),
+        apiService.getCourses()
+      ]);
+      // Ensure data is arrays
+      setAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
+      setCourses(Array.isArray(coursesData) ? coursesData : []);
+    } catch (err: any) {
+      console.error('Error loading data:', err);
+      setError(err.message || 'Failed to load data');
+      // Set empty arrays on error
+      setAttendance([]);
+      setStudents([]);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteAttendance = (id: number) => {
-    setAttendance(attendance.filter(record => record.id !== id));
+  const handleAddAttendance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      await apiService.createAttendance(newAttendance);
+      
+      // Reset form and reload data
+      setNewAttendance({
+        studentId: students[0]?.id || 1,
+        courseId: courses[0]?.id || 1,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Present',
+        notes: ''
+      });
+      setShowAddForm(false);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create attendance record');
+    }
+  };
+
+  const handleDeleteAttendance = async (id: number) => {
+    try {
+      await apiService.deleteAttendance(id);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete attendance record');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -163,6 +150,12 @@ export default function AttendancePage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="text-gray-500">Loading attendance...</div>
@@ -170,32 +163,32 @@ export default function AttendancePage() {
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {attendance.map((record) => (
+              {attendance && attendance.length > 0 ? attendance.map((record) => (
                 <li key={record.id}>
                   <div className="px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center">
                           <span className="text-white font-medium text-lg">
-                            {getStatusIcon(record.status)}
+                            {getStatusIcon(record.status || 'Unknown')}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {record.studentName}
+                          {record.studentName || 'Unknown Student'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {record.courseName}
+                          {record.courseName || 'Unknown Course'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {record.date} {record.notes && `• ${record.notes}`}
+                          {record.date || 'No date'} {record.notes && `• ${record.notes}`}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(record.status)}`}>
-                        {record.status}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(record.status || 'Unknown')}`}>
+                        {record.status || 'Unknown'}
                       </span>
                       <button
                         onClick={() => handleDeleteAttendance(record.id)}
@@ -206,7 +199,11 @@ export default function AttendancePage() {
                     </div>
                   </div>
                 </li>
-              ))}
+              )) : (
+                <li className="px-4 py-8 text-center text-gray-500">
+                  No attendance records found
+                </li>
+              )}
             </ul>
           </div>
         )}
@@ -227,7 +224,7 @@ export default function AttendancePage() {
                     >
                       {students.map(student => (
                         <option key={student.id} value={student.id}>
-                          {student.name}
+                          {student.user.firstName} {student.user.lastName}
                         </option>
                       ))}
                     </select>

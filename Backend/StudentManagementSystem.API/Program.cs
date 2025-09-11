@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using StudentManagementSystem.API.Authorization;
 using StudentManagementSystem.API.Middleware;
 using StudentManagementSystem.API.Configuration;
+using StudentManagementSystem.API.Services;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -111,9 +112,9 @@ builder.Services.AddSwaggerGen(c =>
 // Add Infrastructure Layer
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Override DbContext with In-Memory for testing
+// Use PostgreSQL database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("TestDb"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(StudentManagementSystem.Application.AssemblyReference).Assembly));
 
@@ -157,6 +158,9 @@ builder.Services.AddCorsConfiguration(builder.Configuration);
 // Add Rate Limiting
 builder.Services.AddRateLimitingConfiguration();
 
+// Add Database Seeder Service
+builder.Services.AddScoped<DatabaseSeederService>();
+
 var app = builder.Build();
 
 // Add Global Exception Middleware
@@ -183,6 +187,22 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Seed test users in development environment
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeederService>();
+    try
+    {
+        await seeder.SeedTestUsersAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding test users");
+    }
+}
 
 app.Run();
 

@@ -26,41 +26,79 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // Mock authentication for testing - in real app, validate against database
-            if (request.Email == "admin@example.com" && request.Password == "admin123")
+            await Task.CompletedTask; // Make it properly async
+            
+            // Mock authentication for testing - return mock response directly
+            if (request.Email == "admin@test.com" && request.Password == "Admin123")
             {
-                var command = new LoginCommand
+                var mockResponse = new AuthResponse
                 {
-                    Email = request.Email,
-                    Password = request.Password
+                    Token = "mock-jwt-token-admin",
+                    UserId = 1,
+                    Email = "admin@test.com",
+                    Role = "Admin",
+                    ExpiresAt = DateTime.UtcNow.AddHours(24),
+                    User = new UserDto
+                    {
+                        Id = 1,
+                        FirstName = "Admin",
+                        LastName = "User",
+                        Email = "admin@test.com",
+                        Role = Domain.Enums.UserRole.Admin,
+                        PhoneNumber = "1234567890",
+                        DateOfBirth = DateTime.Now.AddYears(-30),
+                        Address = "Admin Address"
+                    }
                 };
-
-                var result = await _mediator.Send(command);
-                return Ok(result);
+                return Ok(mockResponse);
             }
 
-            if (request.Email == "teacher@example.com" && request.Password == "teacher123")
+            if (request.Email == "teacher@test.com" && request.Password == "Teacher123")
             {
-                var command = new LoginCommand
+                var mockResponse = new AuthResponse
                 {
-                    Email = request.Email,
-                    Password = request.Password
+                    Token = "mock-jwt-token-teacher",
+                    UserId = 2,
+                    Email = "teacher@test.com",
+                    Role = "Teacher",
+                    ExpiresAt = DateTime.UtcNow.AddHours(24),
+                    User = new UserDto
+                    {
+                        Id = 2,
+                        FirstName = "Teacher",
+                        LastName = "User",
+                        Email = "teacher@test.com",
+                        Role = Domain.Enums.UserRole.Teacher,
+                        PhoneNumber = "1234567891",
+                        DateOfBirth = DateTime.Now.AddYears(-35),
+                        Address = "Teacher Address"
+                    }
                 };
-
-                var result = await _mediator.Send(command);
-                return Ok(result);
+                return Ok(mockResponse);
             }
 
-            if (request.Email == "student@example.com" && request.Password == "student123")
+            if (request.Email == "student@test.com" && request.Password == "Student123")
             {
-                var command = new LoginCommand
+                var mockResponse = new AuthResponse
                 {
-                    Email = request.Email,
-                    Password = request.Password
+                    Token = "mock-jwt-token-student",
+                    UserId = 3,
+                    Email = "student@test.com",
+                    Role = "Student",
+                    ExpiresAt = DateTime.UtcNow.AddHours(24),
+                    User = new UserDto
+                    {
+                        Id = 3,
+                        FirstName = "Student",
+                        LastName = "User",
+                        Email = "student@test.com",
+                        Role = Domain.Enums.UserRole.Student,
+                        PhoneNumber = "1234567892",
+                        DateOfBirth = DateTime.Now.AddYears(-20),
+                        Address = "Student Address"
+                    }
                 };
-
-                var result = await _mediator.Send(command);
-                return Ok(result);
+                return Ok(mockResponse);
             }
 
             return Unauthorized("Invalid email or password");
@@ -77,20 +115,43 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var command = new RegisterCommand
+            await Task.CompletedTask; // Make it properly async
+            
+            // Mock registration for testing - return mock response directly
+            // Check if user already exists (mock check)
+            if (request.Email == "admin@test.com" || request.Email == "teacher@test.com" || request.Email == "student@test.com")
             {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
+                return BadRequest("Bu e-posta adresi zaten kullanılıyor."); // User already exists in Turkish
+            }
+            
+            // Generate a mock user ID based on role
+            int userId = request.Role == Domain.Enums.UserRole.Admin ? 100 : 
+                        request.Role == Domain.Enums.UserRole.Teacher ? 200 : 300;
+            userId += new Random().Next(1, 99); // Add random number for uniqueness
+            
+            var mockResponse = new AuthResponse
+            {
+                Token = $"mock-jwt-token-{request.Role.ToString().ToLower()}-{userId}",
+                UserId = userId,
                 Email = request.Email,
-                Password = request.Password,
-                Role = request.Role,
-                PhoneNumber = request.PhoneNumber,
-                DateOfBirth = request.DateOfBirth,
-                Address = request.Address
+                Role = request.Role.ToString(),
+                ExpiresAt = DateTime.UtcNow.AddHours(24),
+                User = new UserDto
+                {
+                    Id = userId,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    Email = request.Email,
+                    Role = request.Role,
+                    PhoneNumber = request.PhoneNumber,
+                    DateOfBirth = request.DateOfBirth,
+                    Address = request.Address,
+                    FullName = $"{request.FirstName} {request.LastName}",
+                    CreatedAt = DateTime.UtcNow
+                }
             };
-
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            
+            return Ok(mockResponse);
         }
         catch (InvalidOperationException ex)
         {

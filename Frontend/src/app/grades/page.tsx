@@ -2,100 +2,94 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-interface Grade {
-  id: number;
-  studentId: number;
-  studentName: string;
-  courseId: number;
-  courseName: string;
-  grade: number;
-  gradeType: 'Midterm' | 'Final' | 'Assignment' | 'Quiz';
-  semester: string;
-  date: string;
-}
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService, GradeDto, CreateGradeRequest } from '@/lib/api';
 
 export default function GradesPage() {
-  const [grades, setGrades] = useState<Grade[]>([]);
+  const [grades, setGrades] = useState<GradeDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newGrade, setNewGrade] = useState({
+  const [error, setError] = useState('');
+  const [students, setStudents] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [newGrade, setNewGrade] = useState<CreateGradeRequest>({
     studentId: 1,
     courseId: 1,
-    grade: 0,
-    gradeType: 'Midterm' as const,
+    score: 0,
+    gradeType: 'Midterm',
     semester: 'Fall 2024',
     date: new Date().toISOString().split('T')[0]
   });
-
-  const students = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' }
-  ];
-
-  const courses = [
-    { id: 1, name: 'Introduction to Programming' },
-    { id: 2, name: 'Calculus I' }
-  ];
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    // TODO: Load grades from API
-    setTimeout(() => {
-      setGrades([
-        {
-          id: 1,
-          studentId: 1,
-          studentName: 'John Doe',
-          courseId: 1,
-          courseName: 'Introduction to Programming',
-          grade: 85,
-          gradeType: 'Midterm',
-          semester: 'Fall 2024',
-          date: '2024-10-15'
-        },
-        {
-          id: 2,
-          studentId: 2,
-          studentName: 'Jane Smith',
-          courseId: 2,
-          courseName: 'Calculus I',
-          grade: 92,
-          gradeType: 'Final',
-          semester: 'Fall 2024',
-          date: '2024-12-10'
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    // Wait for auth loading to complete
+    if (isLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
 
-  const handleAddGrade = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const selectedStudent = students.find(s => s.id === newGrade.studentId);
-    const selectedCourse = courses.find(c => c.id === newGrade.courseId);
-    
-    const grade: Grade = {
-      id: grades.length + 1,
-      ...newGrade,
-      studentName: selectedStudent?.name || '',
-      courseName: selectedCourse?.name || ''
-    };
-    
-    setGrades([...grades, grade]);
-    setNewGrade({
-      studentId: 1,
-      courseId: 1,
-      grade: 0,
-      gradeType: 'Midterm',
-      semester: 'Fall 2024',
-      date: new Date().toISOString().split('T')[0]
-    });
-    setShowAddForm(false);
+    loadData();
+  }, [isAuthenticated, isLoading, router]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [gradesData, studentsData, coursesData] = await Promise.all([
+        apiService.getGrades(),
+        apiService.getStudents(),
+        apiService.getCourses()
+      ]);
+      // Ensure data is arrays
+      setGrades(Array.isArray(gradesData) ? gradesData : []);
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
+      setCourses(Array.isArray(coursesData) ? coursesData : []);
+    } catch (err: any) {
+      console.error('Error loading data:', err);
+      setError(err.message || 'Failed to load data');
+      // Set empty arrays on error
+      setGrades([]);
+      setStudents([]);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteGrade = (id: number) => {
-    setGrades(grades.filter(grade => grade.id !== id));
+  const handleAddGrade = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      await apiService.createGrade(newGrade);
+      
+      // Reset form and reload data
+      setNewGrade({
+        studentId: students[0]?.id || 1,
+        courseId: courses[0]?.id || 1,
+        score: 0,
+        gradeType: 'Midterm',
+        semester: 'Fall 2024',
+        date: new Date().toISOString().split('T')[0]
+      });
+      setShowAddForm(false);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create grade');
+    }
+  };
+
+  const handleDeleteGrade = async (id: number) => {
+    try {
+      await apiService.deleteGrade(id);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete grade');
+    }
   };
 
   const getGradeColor = (grade: number) => {
@@ -151,6 +145,12 @@ export default function GradesPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="text-gray-500">Loading grades...</div>
@@ -158,35 +158,35 @@ export default function GradesPage() {
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {grades.map((grade) => (
+              {grades && grades.length > 0 ? grades.map((grade) => (
                 <li key={grade.id}>
                   <div className="px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center">
                           <span className="text-white font-medium">
-                            {grade.grade}
+                            {grade.score || 0}
                           </span>
                         </div>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {grade.studentName}
+                          {grade.studentName || 'Unknown Student'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {grade.courseName}
+                          {grade.courseName || 'Unknown Course'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {grade.semester} • {grade.date}
+                          {grade.semester || 'No semester'} • {grade.date || 'No date'}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeTypeColor(grade.gradeType)}`}>
-                        {grade.gradeType}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeTypeColor(grade.gradeType || 'Other')}`}>
+                        {grade.gradeType || 'Other'}
                       </span>
-                      <span className={`text-lg font-bold ${getGradeColor(grade.grade)}`}>
-                        {grade.grade}
+                      <span className={`text-lg font-bold ${getGradeColor(grade.score || 0)}`}>
+                        {grade.score || 0}
                       </span>
                       <button
                         onClick={() => handleDeleteGrade(grade.id)}
@@ -197,7 +197,11 @@ export default function GradesPage() {
                     </div>
                   </div>
                 </li>
-              ))}
+              )) : (
+                <li className="px-4 py-8 text-center text-gray-500">
+                  No grades found
+                </li>
+              )}
             </ul>
           </div>
         )}
@@ -218,7 +222,7 @@ export default function GradesPage() {
                     >
                       {students.map(student => (
                         <option key={student.id} value={student.id}>
-                          {student.name}
+                          {student.user.firstName} {student.user.lastName}
                         </option>
                       ))}
                     </select>
@@ -246,8 +250,8 @@ export default function GradesPage() {
                       min="0"
                       max="100"
                       required
-                      value={newGrade.grade}
-                      onChange={(e) => setNewGrade({...newGrade, grade: parseInt(e.target.value)})}
+                      value={newGrade.score}
+                      onChange={(e) => setNewGrade({...newGrade, score: parseInt(e.target.value)})}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
