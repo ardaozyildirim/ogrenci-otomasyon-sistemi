@@ -14,7 +14,7 @@ namespace StudentManagementSystem.API.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiVersion("1.0")]
 // [Authorize] // Temporarily disabled for development
-[EnableRateLimiting("ApiPolicy")]
+// [EnableRateLimiting("ApiPolicy")] // Temporarily disabled for development
 public class AttendanceController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -178,23 +178,10 @@ public class AttendanceController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), 403)]
     public async Task<ActionResult<ApiResponse<int>>> RecordAttendance(RecordAttendanceCommand command)
     {
-        try
-        {
-            var attendanceId = await _mediator.Send(command);
-            return CreatedAtAction(nameof(GetStudentAttendance), 
-                new { studentId = command.StudentId }, 
-                ApiResponse<int>.SuccessResponse(attendanceId, "Attendance recorded successfully"));
-        }
-        catch (Exception)
-        {
-            // Mock attendance creation
-            await Task.CompletedTask;
-            var mockAttendanceId = new Random().Next(4000, 9999);
-            
-            return CreatedAtAction(nameof(GetStudentAttendance), 
-                new { studentId = command.StudentId }, 
-                ApiResponse<int>.SuccessResponse(mockAttendanceId, "Attendance recorded successfully"));
-        }
+        var attendanceId = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetStudentAttendance), 
+            new { studentId = command.StudentId }, 
+            ApiResponse<int>.SuccessResponse(attendanceId, "Attendance recorded successfully"));
     }
 
     /// <summary>

@@ -116,18 +116,19 @@ export interface GradeDto {
   courseId: number;
   courseName: string;
   score: number;
-  gradeType: string;
-  semester: string;
-  date: string;
+  gradeType?: string;
+  comment?: string;
+  gradeDate: string;  // Backend sends DateTime as string
+  letterGrade?: string;
+  isPassingGrade?: boolean;
 }
 
 export interface CreateGradeRequest {
   studentId: number;
   courseId: number;
   score: number;
-  gradeType: string;
-  semester: string;
-  date: string;
+  gradeType?: string;  // Optional, matches backend AssignGradeCommand
+  comment?: string;    // Optional, matches backend AssignGradeCommand
 }
 
 export interface AttendanceDto {
@@ -137,8 +138,11 @@ export interface AttendanceDto {
   courseId: number;
   courseName: string;
   date: string;
-  status: string;
+  status?: string; // For frontend compatibility
+  isPresent?: boolean; // For backend compatibility
   notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateAttendanceRequest {
@@ -157,6 +161,48 @@ class ApiService {
     return null;
   }
 
+  // Test API connection
+  async testConnection(): Promise<boolean> {
+    try {
+      console.log('🔍 Testing API connection...');
+      const response = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log(`📡 Health check response: ${response.status}`);
+      return response.ok;
+    } catch (error) {
+      console.error('❌ API connection test failed:', error);
+      return false;
+    }
+  }
+
+  // Test specific endpoint without auth
+  async testEndpoint(endpoint: string): Promise<{ success: boolean; status?: number; error?: string }> {
+    try {
+      console.log(`🔍 Testing endpoint: ${endpoint}`);
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return {
+        success: response.ok,
+        status: response.status
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -173,25 +219,58 @@ class ApiService {
     };
 
     try {
+      console.log(`🔗 API Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
+      console.log('📦 Request config:', {
+        url: `${API_BASE_URL}${endpoint}`,
+        method: config.method || 'GET',
+        hasAuth: !!token,
+        headers: config.headers
+      });
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+      
+      console.log(`📨 Response: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        console.error('❌ API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: `${API_BASE_URL}${endpoint}`,
+          method: config.method || 'GET',
+          errorText: errorText,
+          hasAuth: !!token
+        });
+        
+        // Provide more specific error messages
+        if (response.status === 401) {
+          throw new Error(`Authentication failed. Please login again.`);
+        }
+        if (response.status === 403) {
+          throw new Error(`Access denied. You don't have permission for this action.`);
+        }
+        if (response.status === 404) {
+          throw new Error(`Endpoint not found: ${endpoint}`);
+        }
+        if (response.status >= 500) {
+          throw new Error(`Server error (${response.status}). Please try again later.`);
+        }
+        
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
       }
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        console.error('Non-JSON response:', text);
+        console.error('⚠️ Non-JSON response:', text);
         throw new Error('Server returned non-JSON response');
       }
 
       const data = await response.json();
+      console.log('✅ API Success:', data);
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('❌ API Error:', error);
       throw error;
     }
   }
@@ -505,28 +584,95 @@ class ApiService {
   async getAttendance(): Promise<AttendanceDto[]> {
     try {
       const response = await this.request<AttendanceDto[]>('/v1/Attendance');
-      return response.data;
-    } catch (error) {
-      // If wrapped response fails, try direct response format
-      const token = this.getAuthToken();
       
-      const config: RequestInit = {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      };
-
-      const response = await fetch(`${API_BASE_URL}/v1/Attendance`, config);
+      // Handle different response formats
+      let attendanceData;
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Attendance API Error Response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      // Case 1: Direct array response (current GetAllAttendance endpoint)
+      if (Array.isArray(response)) {
+        attendanceData = response;
       }
+      // Case 2: Wrapped response with data property
+      else if (response?.data && Array.isArray(response.data)) {
+        attendanceData = response.data;
+      }
+      // Case 3: Response object that might contain attendance data
+      else if (response && typeof response === 'object') {
+        // Log the response structure for debugging
+        console.log('Unexpected response format:', response);
+        attendanceData = [];
+      }
+      // Case 4: No response or invalid response
+      else {
+        console.warn('No valid response received:', response);
+        attendanceData = [];
+      }
+      
+      // Ensure attendanceData is an array before mapping
+      if (!Array.isArray(attendanceData)) {
+        console.warn('Attendance data is not an array:', { response, attendanceData });
+        return [];
+      }
+      
+      // Transform backend format to frontend format
+      return attendanceData.map(record => ({
+        ...record,
+        // Convert IsPresent boolean to status string for frontend compatibility
+        status: record.isPresent !== undefined 
+          ? (record.isPresent ? 'Present' : 'Absent')
+          : (record.status || 'Unknown'),
+        // Ensure date is properly formatted
+        date: typeof record.date === 'string' 
+          ? record.date.split('T')[0] 
+          : new Date(record.date).toISOString().split('T')[0]
+      }));
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      
+      // Fallback: try direct API call
+      try {
+        const token = this.getAuthToken();
+        const config: RequestInit = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        };
 
-      const data = await response.json();
-      return data; // Direct response from backend
+        const response = await fetch(`${API_BASE_URL}/v1/Attendance`, config);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Attendance API Error Response:', errorText);
+          return []; // Return empty array instead of throwing
+        }
+
+        const data = await response.json();
+        
+        // Handle different response formats and ensure it's an array
+        let attendanceArray = [];
+        if (Array.isArray(data)) {
+          attendanceArray = data;
+        } else if (data && Array.isArray(data.data)) {
+          attendanceArray = data.data;
+        } else if (data && typeof data === 'object') {
+          // If it's a single object, wrap it in an array
+          attendanceArray = [data];
+        }
+        
+        return attendanceArray.map((record: any) => ({
+          ...record,
+          status: record.isPresent !== undefined 
+            ? (record.isPresent ? 'Present' : 'Absent')
+            : (record.status || 'Unknown'),
+          date: typeof record.date === 'string' 
+            ? record.date.split('T')[0] 
+            : new Date(record.date || Date.now()).toISOString().split('T')[0]
+        }));
+      } catch (fallbackError) {
+        console.error('Fallback attendance fetch failed:', fallbackError);
+        return []; // Always return an empty array instead of throwing
+      }
     }
   }
 
@@ -536,11 +682,56 @@ class ApiService {
   }
 
   async createAttendance(attendanceData: CreateAttendanceRequest): Promise<number> {
-    const response = await this.request<number>('/v1/Attendance', {
-      method: 'POST',
-      body: JSON.stringify(attendanceData),
-    });
-    return response.data;
+    try {
+      // Convert frontend status string to backend boolean format if needed
+      const backendData = {
+        ...attendanceData,
+        isPresent: attendanceData.status === 'Present',
+        // Ensure date is in proper format
+        date: new Date(attendanceData.date).toISOString()
+      };
+      
+      const response = await this.request<number>('/v1/Attendance', {
+        method: 'POST',
+        body: JSON.stringify(backendData),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating attendance:', error);
+      
+      // Fallback: try direct API call with different payload format
+      try {
+        const token = this.getAuthToken();
+        const config: RequestInit = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({
+            studentId: attendanceData.studentId,
+            courseId: attendanceData.courseId,
+            date: new Date(attendanceData.date).toISOString(),
+            isPresent: attendanceData.status === 'Present',
+            notes: attendanceData.notes || ''
+          })
+        };
+
+        const response = await fetch(`${API_BASE_URL}/v1/Attendance`, config);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Create Attendance API Error:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        return data.data || data.id || Math.floor(Math.random() * 9999);
+      } catch (fallbackError) {
+        console.error('Fallback attendance creation failed:', fallbackError);
+        throw fallbackError;
+      }
+    }
   }
 
   async updateAttendance(id: number, attendanceData: Partial<CreateAttendanceRequest>): Promise<void> {

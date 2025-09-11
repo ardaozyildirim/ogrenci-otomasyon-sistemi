@@ -6,20 +6,19 @@ public class GradeCalculationService : IGradeCalculationService
 {
     public decimal CalculateAverageGrade(IEnumerable<Grade> grades)
     {
-        var gradeList = grades.ToList();
-        if (!gradeList.Any())
-            return 0;
-
-        return gradeList.Average(g => g.Score);
+        var gradesList = grades?.ToList() ?? new List<Grade>();
+        
+        return gradesList.Any() ? gradesList.Average(g => g.Score) : 0;
     }
 
     public decimal CalculateGPA(IEnumerable<Grade> grades, int totalCredits)
     {
-        var gradeList = grades.ToList();
-        if (!gradeList.Any() || totalCredits == 0)
+        var gradesList = grades?.ToList() ?? new List<Grade>();
+        
+        if (!gradesList.Any() || totalCredits <= 0)
             return 0;
 
-        var totalPoints = gradeList.Sum(g => GetGradePoints(g.Score) * GetCourseCredits(g.Course));
+        var totalPoints = gradesList.Sum(g => ConvertToGradePoints(g.Score) * GetCreditsForCourse(g.Course));
         return totalPoints / totalCredits;
     }
 
@@ -28,19 +27,16 @@ public class GradeCalculationService : IGradeCalculationService
         return score switch
         {
             >= 90 => "A",
-            >= 80 => "B",
+            >= 80 => "B", 
             >= 70 => "C",
             >= 60 => "D",
             _ => "F"
         };
     }
 
-    public bool IsPassingGrade(decimal score)
-    {
-        return score >= 60;
-    }
+    public bool IsPassingGrade(decimal score) => score >= 60;
 
-    private static decimal GetGradePoints(decimal score)
+    private static decimal ConvertToGradePoints(decimal score)
     {
         return score switch
         {
@@ -52,7 +48,7 @@ public class GradeCalculationService : IGradeCalculationService
         };
     }
 
-    private static int GetCourseCredits(Course course)
+    private static int GetCreditsForCourse(Course course)
     {
         return course?.Credits ?? 0;
     }

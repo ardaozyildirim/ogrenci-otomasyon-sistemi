@@ -17,15 +17,29 @@ public record StudentNumber
 
     public static StudentNumber Create(string studentNumber)
     {
-        if (string.IsNullOrWhiteSpace(studentNumber))
-            throw new ArgumentException("Student number cannot be null or empty", nameof(studentNumber));
-
-        var upperStudentNumber = studentNumber.ToUpperInvariant();
+        ValidateStudentNumber(studentNumber);
         
-        if (!StudentNumberRegex.IsMatch(upperStudentNumber))
-            throw new ArgumentException("Student number must be in format: YYYYAAXXX (e.g., 2024CS001)", nameof(studentNumber));
+        var normalizedNumber = NormalizeStudentNumber(studentNumber);
+        EnsureValidFormat(normalizedNumber);
 
-        return new StudentNumber(upperStudentNumber);
+        return new StudentNumber(normalizedNumber);
+    }
+
+    private static void ValidateStudentNumber(string studentNumber)
+    {
+        if (string.IsNullOrWhiteSpace(studentNumber))
+            throw new ArgumentException("Student number is required", nameof(studentNumber));
+    }
+
+    private static string NormalizeStudentNumber(string studentNumber)
+    {
+        return studentNumber.ToUpperInvariant().Trim();
+    }
+
+    private static void EnsureValidFormat(string normalizedNumber)
+    {
+        if (!StudentNumberRegex.IsMatch(normalizedNumber))
+            throw new ArgumentException("Student number must be in format: YYYYAAXXX (e.g., 2024CS001)");
     }
 
     public static implicit operator string(StudentNumber studentNumber) => studentNumber.Value;

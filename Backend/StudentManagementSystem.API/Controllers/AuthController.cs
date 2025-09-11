@@ -115,43 +115,23 @@ public class AuthController : ControllerBase
     {
         try
         {
-            await Task.CompletedTask; // Make it properly async
-            
-            // Mock registration for testing - return mock response directly
-            // Check if user already exists (mock check)
-            if (request.Email == "admin@test.com" || request.Email == "teacher@test.com" || request.Email == "student@test.com")
+            // Create the actual user command
+            var createUserCommand = new RegisterCommand
             {
-                return BadRequest("Bu e-posta adresi zaten kullanılıyor."); // User already exists in Turkish
-            }
-            
-            // Generate a mock user ID based on role
-            int userId = request.Role == Domain.Enums.UserRole.Admin ? 100 : 
-                        request.Role == Domain.Enums.UserRole.Teacher ? 200 : 300;
-            userId += new Random().Next(1, 99); // Add random number for uniqueness
-            
-            var mockResponse = new AuthResponse
-            {
-                Token = $"mock-jwt-token-{request.Role.ToString().ToLower()}-{userId}",
-                UserId = userId,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
                 Email = request.Email,
-                Role = request.Role.ToString(),
-                ExpiresAt = DateTime.UtcNow.AddHours(24),
-                User = new UserDto
-                {
-                    Id = userId,
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
-                    Email = request.Email,
-                    Role = request.Role,
-                    PhoneNumber = request.PhoneNumber,
-                    DateOfBirth = request.DateOfBirth,
-                    Address = request.Address,
-                    FullName = $"{request.FirstName} {request.LastName}",
-                    CreatedAt = DateTime.UtcNow
-                }
+                Password = request.Password,
+                Role = request.Role,
+                PhoneNumber = request.PhoneNumber,
+                DateOfBirth = request.DateOfBirth,
+                Address = request.Address
             };
             
-            return Ok(mockResponse);
+            // Send the command via MediatR to actually create the user
+            var authResponse = await _mediator.Send(createUserCommand);
+            
+            return Ok(authResponse);
         }
         catch (InvalidOperationException ex)
         {

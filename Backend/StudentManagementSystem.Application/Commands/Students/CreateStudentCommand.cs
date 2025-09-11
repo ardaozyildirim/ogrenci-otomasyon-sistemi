@@ -19,20 +19,34 @@ public class CreateStudentCommandHandler : ICommandHandler<CreateStudentCommand,
 
     public CreateStudentCommandHandler(IStudentRepository studentRepository, IUserRepository userRepository)
     {
-        _studentRepository = studentRepository;
-        _userRepository = userRepository;
+        _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
     }
 
     public async Task<int> Handle(CreateStudentCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (user == null)
-            throw new ArgumentException("User not found", nameof(request.UserId));
+        await ValidateUserExists(request.UserId, cancellationToken);
+        
+        var student = CreateStudentFromCommand(request);
+        var savedStudent = await _studentRepository.AddAsync(student, cancellationToken);
+        
+        return savedStudent.Id;
+    }
 
-        var student = Student.Create(request.UserId, request.StudentNumber, request.Department, request.Grade, request.ClassName);
-        
-        var createdStudent = await _studentRepository.AddAsync(student, cancellationToken);
-        
-        return createdStudent.Id;
+    private async Task ValidateUserExists(int userId, CancellationToken cancellationToken)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user == null)
+            throw new ArgumentException($"User with ID {userId} not found", nameof(userId));
+    }
+
+    private static Student CreateStudentFromCommand(CreateStudentCommand command)
+    {
+        return Student.Create(
+            command.UserId, 
+            command.StudentNumber, 
+            command.Department, 
+            command.Grade, 
+            command.ClassName);
     }
 }

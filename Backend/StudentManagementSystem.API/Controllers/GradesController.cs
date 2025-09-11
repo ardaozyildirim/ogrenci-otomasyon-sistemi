@@ -12,7 +12,7 @@ namespace StudentManagementSystem.API.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiVersion("1.0")]
 // [Authorize] // Temporarily disabled for development
-[Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("ApiPolicy")]
+// [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("ApiPolicy")] // Temporarily disabled for development
 public class GradesController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -64,7 +64,7 @@ public class GradesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Teacher")]
+    // [Authorize(Roles = "Admin,Teacher")] // Temporarily disabled for development
     public async Task<ActionResult<int>> AssignGrade(AssignGradeCommand command)
     {
         var gradeId = await _mediator.Send(command);
@@ -72,7 +72,7 @@ public class GradesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Teacher")]
+    // [Authorize(Roles = "Admin,Teacher")] // Temporarily disabled for development
     public async Task<IActionResult> UpdateGrade(int id, UpdateGradeCommand command)
     {
         if (id != command.Id)

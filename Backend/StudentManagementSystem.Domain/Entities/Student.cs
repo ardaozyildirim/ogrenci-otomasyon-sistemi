@@ -5,31 +5,47 @@ namespace StudentManagementSystem.Domain.Entities;
 
 public class Student : BaseEntity
 {
-    public int UserId { get; set; }
-    public string StudentNumber { get; set; } = string.Empty;
-    public string? Department { get; set; }
-    public int? Grade { get; set; }
-    public string? ClassName { get; set; }
+    public int UserId { get; private set; }
+    public string StudentNumber { get; private set; } = string.Empty;
+    public string? Department { get; private set; }
+    public int? Grade { get; private set; }
+    public string? ClassName { get; private set; }
     
     public User User { get; set; } = null!;
     public ICollection<StudentCourse> StudentCourses { get; set; } = new List<StudentCourse>();
     public ICollection<Grade> Grades { get; set; } = new List<Grade>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
-    public static Student Create(int userId, string studentNumber, string? department = null, int? grade = null, string? className = null)
+    public static Student Create(int userId, string studentNumber, string? department = null, 
+        int? grade = null, string? className = null)
     {
+        ValidateStudentCreationParams(userId, studentNumber);
+
         var student = new Student
         {
             UserId = userId,
-            StudentNumber = studentNumber,
-            Department = department,
+            StudentNumber = studentNumber.Trim(),
+            Department = department?.Trim(),
             Grade = grade,
-            ClassName = className
+            ClassName = className?.Trim()
         };
 
-        student.AddDomainEvent(new StudentCreatedEvent(student, studentNumber, ""));
-        
+        student.RaiseStudentCreatedEvent(studentNumber);
         return student;
+    }
+
+    private static void ValidateStudentCreationParams(int userId, string studentNumber)
+    {
+        if (userId <= 0)
+            throw new ArgumentException("User ID must be a positive number", nameof(userId));
+            
+        if (string.IsNullOrWhiteSpace(studentNumber))
+            throw new ArgumentException("Student number is required", nameof(studentNumber));
+    }
+
+    private void RaiseStudentCreatedEvent(string studentNumber)
+    {
+        AddDomainEvent(new StudentCreatedEvent(this, studentNumber, ""));
     }
 
     public void EnrollInCourse(int courseId, string courseName)
@@ -58,16 +74,29 @@ public class Student : BaseEntity
 
     public decimal CalculateGPA()
     {
-        if (!Grades.Any())
+        if (!HasAnyGrades())
             return 0;
 
-        var totalCredits = StudentCourses.Where(sc => sc.IsActive).Sum(sc => sc.Course.Credits);
-        var totalPoints = Grades.Sum(g => GetGradePoints(g.Score) * g.Course.Credits);
+        var activeEnrollments = GetActiveEnrollments();
+        var totalCredits = activeEnrollments.Sum(sc => sc.Course.Credits);
+        var totalPoints = CalculateTotalGradePoints();
         
         return totalCredits > 0 ? totalPoints / totalCredits : 0;
     }
 
-    private static decimal GetGradePoints(decimal score)
+    private bool HasAnyGrades() => Grades.Any();
+    
+    private IEnumerable<StudentCourse> GetActiveEnrollments()
+    {
+        return StudentCourses.Where(sc => sc.IsActive);
+    }
+
+    private decimal CalculateTotalGradePoints()
+    {
+        return Grades.Sum(g => ConvertScoreToGradePoints(g.Score) * g.Course.Credits);
+    }
+
+    private static decimal ConvertScoreToGradePoints(decimal score)
     {
         return score switch
         {
@@ -77,5 +106,13 @@ public class Student : BaseEntity
             >= 60 => 1.0m,
             _ => 0.0m
         };
+    }
+
+    public void UpdateStudentInfo(string? department = null, int? grade = null, string? className = null)
+    {
+        Department = department?.Trim();
+        Grade = grade;
+        ClassName = className?.Trim();
+        UpdatedAt = DateTime.UtcNow;
     }
 }

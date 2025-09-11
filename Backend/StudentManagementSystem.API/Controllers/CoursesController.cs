@@ -13,7 +13,7 @@ namespace StudentManagementSystem.API.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiVersion("1.0")]
 // [Authorize] // Temporarily disabled for development
-[EnableRateLimiting("ApiPolicy")]
+// [EnableRateLimiting("ApiPolicy")] // Temporarily disabled for development
 public class CoursesController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -193,21 +193,8 @@ public class CoursesController : ControllerBase
     // [Authorize(Roles = "Admin")] // Temporarily disabled for development
     public async Task<ActionResult<int>> CreateCourse(CreateCourseCommand command)
     {
-        try
-        {
-            await Task.CompletedTask; // Make it properly async
-            
-            // Mock course creation for development testing
-            var courseId = new Random().Next(3000, 9999);
-            
-            return CreatedAtAction(nameof(GetCourse), new { id = courseId }, courseId);
-        }
-        catch (Exception)
-        {
-            // If there's any error, fall back to mock response
-            var mockCourseId = new Random().Next(3000, 9999);
-            return CreatedAtAction(nameof(GetCourse), new { id = mockCourseId }, mockCourseId);
-        }
+        var courseId = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetCourse), new { id = courseId }, courseId);
     }
 
     [HttpPut("{id}")]

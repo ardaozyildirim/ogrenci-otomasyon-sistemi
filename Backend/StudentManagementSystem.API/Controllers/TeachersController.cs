@@ -95,23 +95,8 @@ public class TeachersController : ControllerBase
     // [Authorize(Roles = "Admin")] // Temporarily disabled for development
     public async Task<ActionResult<int>> CreateTeacher(CreateTeacherCommand command)
     {
-        try
-        {
-            await Task.CompletedTask; // Make it properly async
-            
-            // Mock teacher creation for development testing
-            // Generate a random teacher ID
-            var teacherId = new Random().Next(2000, 9999);
-            
-            // Return success response
-            return CreatedAtAction(nameof(GetTeacher), new { id = teacherId }, teacherId);
-        }
-        catch (Exception)
-        {
-            // If there's any error, fall back to mock response
-            var mockTeacherId = new Random().Next(2000, 9999);
-            return CreatedAtAction(nameof(GetTeacher), new { id = mockTeacherId }, mockTeacherId);
-        }
+        var teacherId = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetTeacher), new { id = teacherId }, teacherId);
     }
 
     [HttpPut("{id}")]

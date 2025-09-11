@@ -17,9 +17,7 @@ export default function GradesPage() {
     studentId: 1,
     courseId: 1,
     score: 0,
-    gradeType: 'Midterm',
-    semester: 'Fall 2024',
-    date: new Date().toISOString().split('T')[0]
+    gradeType: 'Midterm'
   });
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
@@ -65,31 +63,57 @@ export default function GradesPage() {
     setError('');
 
     try {
-      await apiService.createGrade(newGrade);
+      const newGradeId = await apiService.createGrade(newGrade);
       
-      // Reset form and reload data
+      // Add the new grade to the existing list instead of reloading all data
+      const newGradeItem: GradeDto = {
+        id: newGradeId,
+        studentId: newGrade.studentId,
+        studentName: students.find(s => s.id === newGrade.studentId)?.user?.firstName + ' ' + 
+                    students.find(s => s.id === newGrade.studentId)?.user?.lastName || 'Unknown Student',
+        courseId: newGrade.courseId,
+        courseName: courses.find(c => c.id === newGrade.courseId)?.name || 'Unknown Course',
+        score: newGrade.score,
+        gradeType: newGrade.gradeType,
+        gradeDate: new Date().toISOString()
+      };
+      
+      // Update the grades list with the new grade
+      setGrades(prevGrades => [...prevGrades, newGradeItem]);
+      
+      // Reset form
       setNewGrade({
         studentId: students[0]?.id || 1,
         courseId: courses[0]?.id || 1,
         score: 0,
-        gradeType: 'Midterm',
-        semester: 'Fall 2024',
-        date: new Date().toISOString().split('T')[0]
+        gradeType: 'Midterm'
       });
       setShowAddForm(false);
-      await loadData();
     } catch (err: any) {
       setError(err.message || 'Failed to create grade');
     }
   };
 
   const handleDeleteGrade = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this grade?')) {
+      return;
+    }
+    
     try {
       await apiService.deleteGrade(id);
-      await loadData();
+      // Remove the grade from the list instead of reloading all data
+      setGrades(prevGrades => prevGrades.filter(grade => grade.id !== id));
     } catch (err: any) {
       setError(err.message || 'Failed to delete grade');
     }
+  };
+
+  const getLetterGrade = (score: number): string => {
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'F';
   };
 
   const getGradeColor = (grade: number) => {
@@ -177,7 +201,7 @@ export default function GradesPage() {
                           {grade.courseName || 'Unknown Course'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {grade.semester || 'No semester'} • {grade.date || 'No date'}
+                          {grade.gradeDate ? new Date(grade.gradeDate).toLocaleDateString() : 'No date'}
                         </div>
                       </div>
                     </div>
@@ -259,8 +283,8 @@ export default function GradesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Grade Type</label>
                     <select
-                      value={newGrade.gradeType}
-                      onChange={(e) => setNewGrade({...newGrade, gradeType: e.target.value as any})}
+                      value={newGrade.gradeType || 'Midterm'}
+                      onChange={(e) => setNewGrade({...newGrade, gradeType: e.target.value})}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="Midterm">Midterm</option>
@@ -271,23 +295,12 @@ export default function GradesPage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Semester</label>
+                    <label className="block text-sm font-medium text-gray-700">Comment (optional)</label>
                     <input
                       type="text"
-                      required
-                      value={newGrade.semester}
-                      onChange={(e) => setNewGrade({...newGrade, semester: e.target.value})}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <input
-                      type="date"
-                      required
-                      value={newGrade.date}
-                      onChange={(e) => setNewGrade({...newGrade, date: e.target.value})}
+                      placeholder="Optional comment about the grade"
+                      value={newGrade.comment || ''}
+                      onChange={(e) => setNewGrade({...newGrade, comment: e.target.value})}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>

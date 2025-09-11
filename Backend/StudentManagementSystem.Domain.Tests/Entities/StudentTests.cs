@@ -50,19 +50,19 @@ public class StudentTests
         var student = Student.Create(1, "2024CS001", "Computer Science");
         
         // Mock grades
-        student.Grades.Add(new Grade { Score = 80, Course = new Course { Credits = 3 } });
-        student.Grades.Add(new Grade { Score = 90, Course = new Course { Credits = 3 } });
+        student.Grades.Add(new Grade { Score = 80, Course = Course.Create("Test Course 1", "TEST101", 3, 1) });
+        student.Grades.Add(new Grade { Score = 90, Course = Course.Create("Test Course 2", "TEST102", 3, 1) });
         
         // Mock student courses
         student.StudentCourses.Add(new StudentCourse 
         { 
             IsActive = true, 
-            Course = new Course { Credits = 3 } 
+            Course = Course.Create("Mock Course 1", "MOCK101", 3, 1)
         });
         student.StudentCourses.Add(new StudentCourse 
         { 
             IsActive = true, 
-            Course = new Course { Credits = 3 } 
+            Course = Course.Create("Mock Course 2", "MOCK102", 3, 1)
         });
 
         // Act

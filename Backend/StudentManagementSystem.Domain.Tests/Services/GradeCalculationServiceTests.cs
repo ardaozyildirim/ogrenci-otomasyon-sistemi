@@ -108,7 +108,7 @@ public class GradeCalculationServiceTests
         return new Grade
         {
             Score = score,
-            Course = new Course { Credits = 3 }
+            Course = Course.Create("Test Course", "TEST101", 3, 1)
         };
     }
 }

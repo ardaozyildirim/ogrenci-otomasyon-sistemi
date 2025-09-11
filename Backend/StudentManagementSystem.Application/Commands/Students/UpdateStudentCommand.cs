@@ -24,16 +24,12 @@ public class UpdateStudentCommandHandler : ICommandHandler<UpdateStudentCommand>
     {
         var student = await _studentRepository.GetByIdAsync(request.Id, cancellationToken);
         if (student == null)
-            throw new ArgumentException("Student not found", nameof(request.Id));
+            throw new ArgumentException($"Student with ID {request.Id} not found", nameof(request.Id));
 
-        if (!string.IsNullOrWhiteSpace(request.Department))
-            student.Department = request.Department;
-        
-        if (request.Grade.HasValue)
-            student.Grade = request.Grade;
-        
-        if (!string.IsNullOrWhiteSpace(request.ClassName))
-            student.ClassName = request.ClassName;
+        student.UpdateStudentInfo(
+            request.Department,
+            request.Grade,
+            request.ClassName);
 
         await _studentRepository.UpdateAsync(student, cancellationToken);
     }

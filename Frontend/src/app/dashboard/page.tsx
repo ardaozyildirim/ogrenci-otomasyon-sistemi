@@ -297,6 +297,40 @@ export default function DashboardPage() {
                 </div>
               </Link>
 
+              <Link
+                href="/seed-data"
+                className="flex items-center p-4 border border-gray-200 rounded-md hover:border-yellow-300 hover:bg-yellow-50 transition-colors"
+              >
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-md flex items-center justify-center">
+                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-gray-900">Data Seeder</h4>
+                  <p className="text-sm text-gray-500">Add sample data using APIs</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/api-test"
+                className="flex items-center p-4 border border-gray-200 rounded-md hover:border-red-300 hover:bg-red-50 transition-colors"
+              >
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-red-100 rounded-md flex items-center justify-center">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-gray-900">API Tester</h4>
+                  <p className="text-sm text-gray-500">Debug API connectivity issues</p>
+                </div>
+              </Link>
+
               <div className="flex items-center p-4 border border-gray-200 rounded-md bg-gray-50">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-gray-200 rounded-md flex items-center justify-center">

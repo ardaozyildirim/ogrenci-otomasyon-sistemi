@@ -24,19 +24,13 @@ public class UpdateCourseCommandHandler : ICommandHandler<UpdateCourseCommand>
     {
         var course = await _courseRepository.GetByIdAsync(request.Id, cancellationToken);
         if (course == null)
-            throw new ArgumentException("Course not found", nameof(request.Id));
+            throw new ArgumentException($"Course with ID {request.Id} not found", nameof(request.Id));
 
-        if (!string.IsNullOrWhiteSpace(request.Name))
-            course.Name = request.Name;
-        
-        if (!string.IsNullOrWhiteSpace(request.Description))
-            course.Description = request.Description;
-        
-        if (!string.IsNullOrWhiteSpace(request.Schedule))
-            course.Schedule = request.Schedule;
-        
-        if (!string.IsNullOrWhiteSpace(request.Location))
-            course.Location = request.Location;
+        course.UpdateCourseDetails(
+            request.Name,
+            request.Description,
+            request.Schedule,
+            request.Location);
 
         await _courseRepository.UpdateAsync(course, cancellationToken);
     }

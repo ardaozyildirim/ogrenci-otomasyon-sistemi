@@ -38,10 +38,10 @@ public static class RateLimitingConfiguration
                     partitionKey: context.User?.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     factory: partition => new FixedWindowRateLimiterOptions
                     {
-                        PermitLimit = 50,
+                        PermitLimit = 200, // Increased from 50 to 200 for development
                         Window = TimeSpan.FromMinutes(1),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                        QueueLimit = 3
+                        QueueLimit = 10 // Increased from 3 to 10
                     }));
 
             // Rejection response

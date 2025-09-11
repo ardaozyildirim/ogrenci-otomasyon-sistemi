@@ -26,25 +26,22 @@ public class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand, UserD
     {
         var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken);
         if (user == null)
-            throw new ArgumentException("User not found", nameof(request.Id));
+            throw new ArgumentException($"User with ID {request.Id} not found", nameof(request.Id));
 
-        if (!string.IsNullOrWhiteSpace(request.FirstName))
-            user.FirstName = request.FirstName;
-        
-        if (!string.IsNullOrWhiteSpace(request.LastName))
-            user.LastName = request.LastName;
-        
-        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
-            user.PhoneNumber = request.PhoneNumber;
-        
-        if (request.DateOfBirth.HasValue)
-            user.DateOfBirth = request.DateOfBirth;
-        
-        if (!string.IsNullOrWhiteSpace(request.Address))
-            user.Address = request.Address;
+        user.UpdateProfile(
+            request.FirstName ?? user.FirstName,
+            request.LastName ?? user.LastName,
+            request.PhoneNumber,
+            request.DateOfBirth,
+            request.Address);
 
         await _userRepository.UpdateAsync(user, cancellationToken);
 
+        return CreateUserDto(user);
+    }
+
+    private static UserDto CreateUserDto(Domain.Entities.User user)
+    {
         return new UserDto
         {
             Id = user.Id,

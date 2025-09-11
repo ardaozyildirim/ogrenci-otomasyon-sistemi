@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -13,6 +15,7 @@ export default function AttendancePage() {
   const [error, setError] = useState('');
   const [students, setStudents] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const [newAttendance, setNewAttendance] = useState<CreateAttendanceRequest>({
     studentId: 1,
     courseId: 1,
@@ -38,15 +41,39 @@ export default function AttendancePage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError('');
+      
       const [attendanceData, studentsData, coursesData] = await Promise.all([
-        apiService.getAttendance(),
-        apiService.getStudents(),
-        apiService.getCourses()
+        apiService.getAttendance().catch(() => []),
+        apiService.getStudents().catch(() => []),
+        apiService.getCourses().catch(() => [])
       ]);
-      // Ensure data is arrays
-      setAttendance(Array.isArray(attendanceData) ? attendanceData : []);
-      setStudents(Array.isArray(studentsData) ? studentsData : []);
-      setCourses(Array.isArray(coursesData) ? coursesData : []);
+      
+      // Ensure data is arrays and handle different response formats
+      const processedAttendance = Array.isArray(attendanceData) 
+        ? attendanceData 
+        : (attendanceData?.data || []);
+      
+      const processedStudents = Array.isArray(studentsData) 
+        ? studentsData 
+        : (studentsData?.data || []);
+        
+      const processedCourses = Array.isArray(coursesData) 
+        ? coursesData 
+        : (coursesData?.data || []);
+      
+      setAttendance(processedAttendance);
+      setStudents(processedStudents);
+      setCourses(processedCourses);
+      
+      // Update default form values if data is available
+      if (processedStudents.length > 0 && processedCourses.length > 0) {
+        setNewAttendance(prev => ({
+          ...prev,
+          studentId: processedStudents[0]?.id || 1,
+          courseId: processedCourses[0]?.id || 1
+        }));
+      }
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError(err.message || 'Failed to load data');
@@ -63,7 +90,24 @@ export default function AttendancePage() {
     e.preventDefault();
     setError('');
 
+    // Validate form data
+    if (students.length === 0) {
+      setError('No students available. Please add students first.');
+      return;
+    }
+    
+    if (courses.length === 0) {
+      setError('No courses available. Please add courses first.');
+      return;
+    }
+
+    if (!newAttendance.studentId || !newAttendance.courseId) {
+      setError('Please select both student and course.');
+      return;
+    }
+
     try {
+      setSubmitting(true);
       await apiService.createAttendance(newAttendance);
       
       // Reset form and reload data
@@ -77,15 +121,24 @@ export default function AttendancePage() {
       setShowAddForm(false);
       await loadData();
     } catch (err: any) {
+      console.error('Error creating attendance:', err);
       setError(err.message || 'Failed to create attendance record');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDeleteAttendance = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this attendance record?')) {
+      return;
+    }
+    
     try {
       await apiService.deleteAttendance(id);
       await loadData();
+      setError(''); // Clear any existing errors
     } catch (err: any) {
+      console.error('Error deleting attendance:', err);
       setError(err.message || 'Failed to delete attendance record');
     }
   };
@@ -138,8 +191,16 @@ export default function AttendancePage() {
                 Back to Dashboard
               </Link>
               <button
-                onClick={() => setShowAddForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                onClick={() => {
+                  if (students.length === 0 || courses.length === 0) {
+                    setError('Cannot add attendance: No students or courses available.');
+                    return;
+                  }
+                  setShowAddForm(true);
+                  setError(''); // Clear any existing errors
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={students.length === 0 || courses.length === 0}
               >
                 Add Attendance
               </button>
@@ -221,12 +282,19 @@ export default function AttendancePage() {
                       value={newAttendance.studentId}
                       onChange={(e) => setNewAttendance({...newAttendance, studentId: parseInt(e.target.value)})}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      disabled={students.length === 0}
                     >
-                      {students.map(student => (
-                        <option key={student.id} value={student.id}>
-                          {student.user.firstName} {student.user.lastName}
-                        </option>
-                      ))}
+                      {students.length > 0 ? (
+                        students.map(student => (
+                          <option key={student.id} value={student.id}>
+                            {student.user ? 
+                              `${student.user.firstName} ${student.user.lastName}` : 
+                              `Student ${student.id}`}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No students available</option>
+                      )}
                     </select>
                   </div>
                   
@@ -236,12 +304,17 @@ export default function AttendancePage() {
                       value={newAttendance.courseId}
                       onChange={(e) => setNewAttendance({...newAttendance, courseId: parseInt(e.target.value)})}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      disabled={courses.length === 0}
                     >
-                      {courses.map(course => (
-                        <option key={course.id} value={course.id}>
-                          {course.name}
-                        </option>
-                      ))}
+                      {courses.length > 0 ? (
+                        courses.map(course => (
+                          <option key={course.id} value={course.id}>
+                            {course.name || `Course ${course.id}`}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No courses available</option>
+                      )}
                     </select>
                   </div>
                   
@@ -290,9 +363,10 @@ export default function AttendancePage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      disabled={submitting || students.length === 0 || courses.length === 0}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add Attendance
+                      {submitting ? 'Adding...' : 'Add Attendance'}
                     </button>
                   </div>
                 </form>

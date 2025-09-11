@@ -14,7 +14,7 @@ namespace StudentManagementSystem.API.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiVersion("1.0")]
 // [Authorize] // Temporarily disabled for development
-[EnableRateLimiting("ApiPolicy")]
+// [EnableRateLimiting("ApiPolicy")] // Temporarily disabled for development
 public class StudentsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -27,13 +27,13 @@ public class StudentsController : ControllerBase
     }
 
     /// <summary>
-    /// Gets all students with optional pagination and filtering
+    /// Retrieves all students with optional filtering and pagination
     /// </summary>
-    /// <param name="pageNumber">Page number for pagination</param>
-    /// <param name="pageSize">Number of items per page</param>
-    /// <param name="department">Filter by department</param>
-    /// <param name="grade">Filter by grade</param>
-    /// <returns>List of students</returns>
+    /// <param name="pageNumber">Page number for pagination (optional)</param>
+    /// <param name="pageSize">Number of items per page (optional)</param>
+    /// <param name="department">Filter by department (optional)</param>
+    /// <param name="grade">Filter by grade level (optional)</param>
+    /// <returns>List of students matching the criteria</returns>
     [HttpGet]
     // [Authorize(Roles = "Admin,Teacher")] // Temporarily disabled for development
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<StudentDto>>), 200)]
@@ -47,48 +47,65 @@ public class StudentsController : ControllerBase
     {
         try
         {
-            var query = new GetAllStudentsQuery
-            {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Department = department,
-                Grade = grade
-            };
-
+            var query = BuildStudentQuery(pageNumber, pageSize, department, grade);
             var students = await _mediator.Send(query);
             var studentDtos = _mapper.Map<IEnumerable<StudentDto>>(students);
-            return Ok(ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(studentDtos, "Students retrieved successfully"));
+            
+            return Ok(ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(
+                studentDtos, "Students retrieved successfully"));
         }
         catch (Exception)
         {
-            // Return mock data if query handler is not implemented
-            var mockStudents = new List<StudentDto>
-            {
-                new StudentDto
-                {
-                    Id = 1,
-                    UserId = 1,
-                    StudentNumber = "2024CS001",
-                    Department = "Computer Science",
-                    Grade = 85,
-                    ClassName = "CS-A",
-                    User = new UserDto
-                    {
-                        Id = 1,
-                        FirstName = "John",
-                        LastName = "Doe",
-                        Email = "john.doe@test.com",
-                        Role = Domain.Enums.UserRole.Student,
-                        PhoneNumber = "+1234567890",
-                        DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                        Address = "123 Main St",
-                        FullName = "John Doe",
-                        CreatedAt = DateTime.UtcNow
-                    }
-                }
-            };
-            return Ok(ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(mockStudents, "Students retrieved successfully"));
+            // Fallback to mock data during development
+            var mockStudents = CreateMockStudentData();
+            return Ok(ApiResponse<IEnumerable<StudentDto>>.SuccessResponse(
+                mockStudents, "Students retrieved successfully"));
         }
+    }
+
+    private static GetAllStudentsQuery BuildStudentQuery(int? pageNumber, int? pageSize, string? department, int? grade)
+    {
+        return new GetAllStudentsQuery
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Department = department,
+            Grade = grade
+        };
+    }
+
+    private static List<StudentDto> CreateMockStudentData()
+    {
+        return new List<StudentDto>
+        {
+            new StudentDto
+            {
+                Id = 1,
+                UserId = 1,
+                StudentNumber = "2024CS001",
+                Department = "Computer Science",
+                Grade = 85,
+                ClassName = "CS-A",
+                User = CreateMockUserDto()
+            }
+        };
+    }
+
+    private static UserDto CreateMockUserDto()
+    {
+        return new UserDto
+        {
+            Id = 1,
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@test.com",
+            Role = Domain.Enums.UserRole.Student,
+            PhoneNumber = "+1234567890",
+            DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Address = "123 Main St",
+            FullName = "John Doe",
+            CreatedAt = DateTime.UtcNow
+        };
     }
 
     [HttpGet("{id}")]
@@ -116,24 +133,11 @@ public class StudentsController : ControllerBase
     // [Authorize(Roles = "Admin,Teacher")] // Temporarily disabled for development
     public async Task<ActionResult<int>> CreateStudent(CreateStudentCommand command)
     {
-        try
-        {
-            await Task.CompletedTask; // Make it properly async
-            
-            // Mock student creation for development testing
-            // Generate a random student ID
-            var studentId = new Random().Next(1000, 9999);
-            
-            // Return success response
-            return CreatedAtAction(nameof(GetStudent), new { id = studentId }, studentId);
-        }
-        catch (Exception)
-        {
-            // If there's any error, fall back to mock response
-            var mockStudentId = new Random().Next(1000, 9999);
-            return CreatedAtAction(nameof(GetStudent), new { id = mockStudentId }, mockStudentId);
-        }
+        var studentId = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetStudent), new { id = studentId }, studentId);
     }
+
+
 
     [HttpPut("{id}")]
     // [Authorize(Roles = "Admin,Teacher")] // Temporarily disabled for development

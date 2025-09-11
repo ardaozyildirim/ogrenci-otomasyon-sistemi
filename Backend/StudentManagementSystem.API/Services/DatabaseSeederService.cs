@@ -37,18 +37,15 @@ public class DatabaseSeederService
             // Create Admin user if not exists
             if (existingAdmin == null)
             {
-                var adminUser = new User
-                {
-                    FirstName = "Admin",
-                    LastName = "User",
-                    Email = "admin@test.com",
-                    PasswordHash = _passwordHashService.HashPassword("Admin123"),
-                    Role = UserRole.Admin,
-                    PhoneNumber = "+1234567890",
-                    DateOfBirth = new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    Address = "Admin Address",
-                    CreatedAt = DateTime.UtcNow
-                };
+                var adminUser = User.Create(
+                    "Admin",
+                    "User",
+                    "admin@test.com",
+                    _passwordHashService.HashPassword("Admin123"),
+                    UserRole.Admin,
+                    "+1234567890",
+                    new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    "Admin Address");
 
                 _context.Users.Add(adminUser);
                 _logger.LogInformation("Created test admin user: admin@test.com");
@@ -57,32 +54,26 @@ public class DatabaseSeederService
             // Create Teacher user if not exists
             if (existingTeacher == null)
             {
-                var teacherUser = new User
-                {
-                    FirstName = "John",
-                    LastName = "Teacher",
-                    Email = "teacher@test.com",
-                    PasswordHash = _passwordHashService.HashPassword("Teacher123"),
-                    Role = UserRole.Teacher,
-                    PhoneNumber = "+1234567891",
-                    DateOfBirth = new DateTime(1985, 5, 15, 0, 0, 0, DateTimeKind.Utc),
-                    Address = "Teacher Address",
-                    CreatedAt = DateTime.UtcNow
-                };
+                var teacherUser = User.Create(
+                    "John",
+                    "Teacher",
+                    "teacher@test.com",
+                    _passwordHashService.HashPassword("Teacher123"),
+                    UserRole.Teacher,
+                    "+1234567891",
+                    new DateTime(1985, 5, 15, 0, 0, 0, DateTimeKind.Utc),
+                    "Teacher Address");
 
                 _context.Users.Add(teacherUser);
                 await _context.SaveChangesAsync();
 
                 // Create Teacher profile
-                var teacher = new Teacher
-                {
-                    UserId = teacherUser.Id,
-                    EmployeeNumber = "T001",
-                    Department = "Computer Science",
-                    Specialization = "Software Engineering",
-                    HireDate = DateTime.UtcNow.AddYears(-2),
-                    CreatedAt = DateTime.UtcNow
-                };
+                var teacher = Teacher.Create(
+                    teacherUser.Id,
+                    "T001",
+                    "Computer Science",
+                    "Software Engineering",
+                    DateTime.UtcNow.AddYears(-2));
 
                 _context.Teachers.Add(teacher);
                 _logger.LogInformation("Created test teacher user: teacher@test.com");
@@ -91,32 +82,26 @@ public class DatabaseSeederService
             // Create Student user if not exists
             if (existingStudent == null)
             {
-                var studentUser = new User
-                {
-                    FirstName = "Jane",
-                    LastName = "Student",
-                    Email = "student@test.com",
-                    PasswordHash = _passwordHashService.HashPassword("Student123"),
-                    Role = UserRole.Student,
-                    PhoneNumber = "+1234567892",
-                    DateOfBirth = new DateTime(2000, 8, 20, 0, 0, 0, DateTimeKind.Utc),
-                    Address = "Student Address",
-                    CreatedAt = DateTime.UtcNow
-                };
+                var studentUser = User.Create(
+                    "Jane",
+                    "Student",
+                    "student@test.com",
+                    _passwordHashService.HashPassword("Student123"),
+                    UserRole.Student,
+                    "+1234567892",
+                    new DateTime(2000, 8, 20, 0, 0, 0, DateTimeKind.Utc),
+                    "Student Address");
 
                 _context.Users.Add(studentUser);
                 await _context.SaveChangesAsync();
 
                 // Create Student profile
-                var student = new Student
-                {
-                    UserId = studentUser.Id,
-                    StudentNumber = "2024CS001",
-                    Department = "Computer Science",
-                    Grade = 85,
-                    ClassName = "CS-A",
-                    CreatedAt = DateTime.UtcNow
-                };
+                var student = Student.Create(
+                    studentUser.Id,
+                    "2024CS001",
+                    "Computer Science",
+                    85,
+                    "CS-A");
 
                 _context.Students.Add(student);
                 _logger.LogInformation("Created test student user: student@test.com");
