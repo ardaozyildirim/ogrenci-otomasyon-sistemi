@@ -1,0 +1,16 @@
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.csproj.AssemblyReference.cache
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.AssemblyInfoInputs.cache
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.AssemblyInfo.cs
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.csproj.CoreCompileInputs.cache
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.sourcelink.json
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\bin\Debug\net9.0\StudentManagementSystem.Application.deps.json
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\bin\Debug\net9.0\StudentManagementSystem.Application.dll
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\bin\Debug\net9.0\StudentManagementSystem.Application.pdb
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\bin\Debug\net9.0\StudentManagementSystem.Domain.dll
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\bin\Debug\net9.0\StudentManagementSystem.Domain.pdb
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentM.486FEF39.Up2Date
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.dll
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\refint\StudentManagementSystem.Application.dll
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\StudentManagementSystem.Application.pdb
+C:\Users\hp\Documents\ogrenci-otomasyon-sistemi\Backend\StudentManagementSystem.Application\obj\Debug\net9.0\ref\StudentManagementSystem.Application.dll
