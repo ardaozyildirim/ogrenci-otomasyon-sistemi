@@ -150,29 +150,49 @@ async Task SeedData(ApplicationDbContext context, ILogger logger)
         
         logger.LogInformation("Database schema updated.");
         
-        // Check if we already have data
-        if (await context.Teachers.AnyAsync())
+        // Check if we already have teachers
+        if (!await context.Teachers.AnyAsync())
         {
-            logger.LogInformation("Seed data already exists.");
-            return;
+            // Create a sample teacher
+            var teacher = new StudentManagementSystem.Domain.Entities.Teacher
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "john.doe@university.com",
+                EmployeeId = "EMP001",
+                Department = "Computer Science",
+                Specialty = "Software Engineering",
+                PhoneNumber = "123-456-7890",
+                HireDate = new DateTime(2020, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            context.Teachers.Add(teacher);
+            logger.LogInformation("Sample teacher created.");
         }
-
-        // Create a sample teacher
-        var teacher = new StudentManagementSystem.Domain.Entities.Teacher
+        
+        // Check if we already have students
+        if (!await context.Students.AnyAsync())
         {
-            FirstName = "John",
-            LastName = "Doe",
-            Email = "john.doe@university.com",
-            EmployeeId = "EMP001",
-            Department = "Computer Science",
-            Specialty = "Software Engineering",
-            PhoneNumber = "123-456-7890",
-            HireDate = new DateTime(2020, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        context.Teachers.Add(teacher);
+            // Create a sample student
+            var student = new StudentManagementSystem.Domain.Entities.Student
+            {
+                FirstName = "Alice",
+                LastName = "Johnson",
+                Email = "alice.johnson@student.com",
+                StudentNumber = "STU001",
+                DateOfBirth = new DateTime(2000, 5, 15, 0, 0, 0, DateTimeKind.Utc),
+                PhoneNumber = "987-654-3210",
+                Address = "123 Student St",
+                EnrollmentDate = new DateTime(2023, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            context.Students.Add(student);
+            logger.LogInformation("Sample student created.");
+        }
         await context.SaveChangesAsync();
         logger.LogInformation("Seed data created successfully.");
     }

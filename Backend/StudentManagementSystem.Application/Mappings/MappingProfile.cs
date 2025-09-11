@@ -53,5 +53,37 @@ public class MappingProfile : Profile
         CreateMap<Student, CourseStudentDto>()
             .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
             .ForMember(dest => dest.EnrollmentDate, opt => opt.MapFrom(src => src.EnrollmentDate));
+        
+        // Grade mappings
+        CreateMap<Grade, GradeDto>()
+            .ForMember(dest => dest.StudentName, opt => opt.MapFrom(src => $"{src.Student.FirstName} {src.Student.LastName}"))
+            .ForMember(dest => dest.StudentNumber, opt => opt.MapFrom(src => src.Student.StudentNumber))
+            .ForMember(dest => dest.CourseName, opt => opt.MapFrom(src => src.Course.Name))
+            .ForMember(dest => dest.CourseCode, opt => opt.MapFrom(src => src.Course.CourseCode));
+        
+        CreateMap<Grade, StudentGradeDto>()
+            .ForMember(dest => dest.CourseName, opt => opt.MapFrom(src => src.Course.Name))
+            .ForMember(dest => dest.CourseCode, opt => opt.MapFrom(src => src.Course.CourseCode))
+            .ForMember(dest => dest.TeacherName, opt => opt.MapFrom(src => $"{src.Course.Teacher.FirstName} {src.Course.Teacher.LastName}"));
+        
+        CreateMap<CreateGradeDto, Grade>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.GradeDate, opt => opt.MapFrom(src => src.GradeDate == default ? DateTime.UtcNow : src.GradeDate));
+        
+        // Attendance mappings
+        CreateMap<Attendance, AttendanceDto>()
+            .ForMember(dest => dest.StudentName, opt => opt.MapFrom(src => $"{src.Student.FirstName} {src.Student.LastName}"))
+            .ForMember(dest => dest.StudentNumber, opt => opt.MapFrom(src => src.Student.StudentNumber))
+            .ForMember(dest => dest.CourseName, opt => opt.MapFrom(src => src.Course.Name))
+            .ForMember(dest => dest.CourseCode, opt => opt.MapFrom(src => src.Course.CourseCode));
+        
+        CreateMap<Attendance, StudentAttendanceDto>()
+            .ForMember(dest => dest.CourseName, opt => opt.MapFrom(src => src.Course.Name))
+            .ForMember(dest => dest.CourseCode, opt => opt.MapFrom(src => src.Course.CourseCode))
+            .ForMember(dest => dest.TeacherName, opt => opt.MapFrom(src => $"{src.Course.Teacher.FirstName} {src.Course.Teacher.LastName}"));
+        
+        CreateMap<CreateAttendanceDto, Attendance>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.AttendanceDate, opt => opt.MapFrom(src => src.AttendanceDate == default ? DateTime.UtcNow : src.AttendanceDate));
     }
 }
